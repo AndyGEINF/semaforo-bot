@@ -1,0 +1,51 @@
+services:
+  # Servidor principal (main.py - puerto 8000)
+  - type: web
+    name: semaforo-bot-main
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: "pip install -r requirements.txt && playwright install chromium --with-deps"
+    startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: REDIS_URL
+        fromDatabase:
+          name: semaforo-redis
+          property: connectionString
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+      - key: EXCHANGE_NAME
+        value: binance
+      - key: DEBUG
+        value: "False"
+    healthCheckPath: /status
+
+  # Servidor SSE Long/Short (api_longshort_ondemand.py - puerto 8001)
+  - type: web
+    name: semaforo-bot-longshort
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: "pip install -r requirements.txt && playwright install chromium --with-deps"
+    startCommand: "uvicorn api_longshort_ondemand:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+    healthCheckPath: /status
+
+  # Frontend estático (index_pro.html)
+  - type: web
+    name: semaforo-bot-frontend
+    runtime: static
+    buildCommand: ""
+    staticPublishPath: ./static
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index_pro.html
+
+databases:
+  # Redis para memoria del bot
+  - name: semaforo-redis
+    plan: free
+    region: oregon

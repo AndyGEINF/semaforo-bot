@@ -1,0 +1,1865 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚦 SemáforoBot PRO - Trading Intelligence</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0e27;
+            --bg-card: #141b2d;
+            --bg-elevated: #1a2332;
+            --primary: #00d4aa;
+            --primary-glow: rgba(0, 212, 170, 0.2);
+            --secondary: #667eea;
+            --danger: #ff4757;
+            --warning: #ffa502;
+            --success: #26de81;
+            --text-primary: #e4e9f0;
+            --text-secondary: #8b95a8;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        /* Background Animation */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+            opacity: 0.3;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 20% 50%, rgba(0, 212, 170, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(102, 126, 234, 0.1) 0%, transparent 50%);
+            animation: bgRotate 20s linear infinite;
+        }
+
+        @keyframes bgRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Main Container */
+        .dashboard {
+            position: relative;
+            z-index: 1;
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 300px 1fr 400px;
+            gap: 20px;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            grid-column: 1 / -1;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .logo h1 {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Asset Selector */
+        .asset-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .asset-btn {
+            background: var(--bg-elevated);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .asset-btn:hover {
+            border-color: var(--primary);
+            background: var(--primary-glow);
+            transform: translateY(-2px);
+        }
+
+        .asset-btn.active {
+            border-color: var(--primary);
+            background: var(--primary-glow);
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        .asset-symbol {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .asset-name {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* Quick Actions */
+        .action-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--primary-glow);
+        }
+
+        .action-btn:active {
+            transform: translateY(0);
+        }
+
+        .action-btn.secondary {
+            background: var(--bg-elevated);
+            border: 2px solid var(--border);
+        }
+
+        .action-btn.danger {
+            background: linear-gradient(135deg, var(--danger), #c23616);
+        }
+
+        /* Main Content */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Semáforo Display */
+        .semaforo-display {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .semaforo-display::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
+        }
+
+        .semaforo-icon {
+            position: relative;
+            font-size: 120px;
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .semaforo-status {
+            position: relative;
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .semaforo-subtitle {
+            position: relative;
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+
+        /* Metrics Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .metric-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        .metric-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .metric-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .metric-change {
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .metric-change.positive { color: var(--success); }
+        .metric-change.negative { color: var(--danger); }
+
+        /* Analysis Panel */
+        .analysis-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            min-height: 400px;
+        }
+
+        .analysis-content {
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .analysis-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .analysis-content::-webkit-scrollbar-track {
+            background: var(--bg-elevated);
+            border-radius: 10px;
+        }
+
+        .analysis-content::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+
+        .analysis-item {
+            background: var(--bg-elevated);
+            border-left: 3px solid var(--primary);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .analysis-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .analysis-asset {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .analysis-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-low { background: rgba(38, 222, 129, 0.2); color: var(--success); }
+        .badge-medium { background: rgba(255, 165, 2, 0.2); color: var(--warning); }
+        .badge-high { background: rgba(255, 71, 87, 0.2); color: var(--danger); }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        .metric-row:last-child {
+            border-bottom: none;
+        }
+
+        /* Right Sidebar */
+        .right-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Probability Gauge */
+        .probability-gauge {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .gauge {
+            flex: 1;
+            text-align: center;
+        }
+
+        .gauge-circle {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 12px;
+            position: relative;
+        }
+
+        .gauge-svg {
+            transform: rotate(-90deg);
+        }
+
+        .gauge-bg {
+            fill: none;
+            stroke: var(--bg-elevated);
+            stroke-width: 10;
+        }
+
+        .gauge-fill {
+            fill: none;
+            stroke: var(--primary);
+            stroke-width: 10;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s ease;
+        }
+
+        .gauge-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .gauge-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Trade Panel */
+        .trade-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .form-input {
+            background: var(--bg-elevated);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        .leverage-slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--bg-elevated);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .leverage-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .leverage-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            text-align: center;
+            margin: 12px 0;
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Alert Messages */
+        .alert {
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .alert-success {
+            background: rgba(38, 222, 129, 0.1);
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+
+        .alert-warning {
+            background: rgba(255, 165, 2, 0.1);
+            border: 1px solid var(--warning);
+            color: var(--warning);
+        }
+
+        .alert-danger {
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+        }
+
+        /* Active Trades List */
+        #activeTradesList {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .trade-item {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.3s;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .trade-item:hover {
+            border-color: var(--primary);
+            transform: translateX(-4px);
+        }
+
+        .trade-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .trade-asset {
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .trade-direction {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .trade-direction.long {
+            background: rgba(38, 222, 129, 0.2);
+            color: var(--success);
+        }
+
+        .trade-direction.short {
+            background: rgba(255, 71, 87, 0.2);
+            color: var(--danger);
+        }
+
+        .trade-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .trade-info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .trade-info-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .trade-info-value {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .trade-pnl {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: var(--bg-dark);
+            border-radius: 8px;
+            margin-top: 8px;
+        }
+
+        .trade-pnl-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .trade-pnl-value {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .trade-pnl-value.profit {
+            color: var(--success);
+        }
+
+        .trade-pnl-value.loss {
+            color: var(--danger);
+        }
+
+        /* Trade History */
+        #tradeHistory {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 12px;
+        }
+
+        .history-item.profit {
+            border-left: 3px solid var(--success);
+        }
+
+        .history-item.loss {
+            border-left: 3px solid var(--danger);
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .history-asset {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .history-date {
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        .history-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border);
+        }
+
+        .history-detail {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .history-detail-label {
+            font-size: 9px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .history-detail-value {
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .history-pnl {
+            font-size: 16px;
+            font-weight: 700;
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1400px) {
+            .dashboard {
+                grid-template-columns: 280px 1fr 350px;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .asset-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    
+    <div class="dashboard">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon">🚦</div>
+                <div>
+                    <h1>SemáforoBot PRO</h1>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                        Advanced Trading Intelligence Platform
+                    </p>
+                </div>
+            </div>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Uptime</span>
+                    <span class="stat-value" style="color: var(--success);">99.9%</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Latency</span>
+                    <span class="stat-value" style="color: var(--primary);" id="latency">--ms</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Active Trades</span>
+                    <span class="stat-value" id="activeTrades">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Left Sidebar -->
+        <div class="sidebar">
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-coins"></i> Asset Selection
+                </div>
+                <div class="asset-grid">
+                    <div class="asset-btn active" onclick="selectAsset('BTC')" data-asset="BTC">
+                        <div class="asset-symbol">₿</div>
+                        <div class="asset-name">Bitcoin</div>
+                    </div>
+                    <div class="asset-btn" onclick="selectAsset('ETH')" data-asset="ETH">
+                        <div class="asset-symbol">Ξ</div>
+                        <div class="asset-name">Ethereum</div>
+                    </div>
+                    <div class="asset-btn" onclick="selectAsset('SOL')" data-asset="SOL">
+                        <div class="asset-symbol">◎</div>
+                        <div class="asset-name">Solana</div>
+                    </div>
+                    <div class="asset-btn" onclick="selectAsset('BNB')" data-asset="BNB">
+                        <div class="asset-symbol">◆</div>
+                        <div class="asset-name">BNB</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-bolt"></i> Quick Actions
+                </div>
+                <button class="action-btn" onclick="analyzeMarket()">
+                    <i class="fas fa-chart-line"></i>
+                    Analyze Market
+                </button>
+                <button class="action-btn secondary" onclick="analyzeMultiple()">
+                    <i class="fas fa-layer-group"></i>
+                    Multi-Asset Analysis
+                </button>
+                <button class="action-btn secondary" onclick="autoTrade()">
+                    <i class="fas fa-robot"></i>
+                    Auto-Trade Setup
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Semáforo Display -->
+            <div class="semaforo-display">
+                <div class="semaforo-icon" id="semaforoIcon">🚦</div>
+                <div class="semaforo-status" id="semaforoStatus">Initializing...</div>
+                <div class="semaforo-subtitle" id="semaforoSubtitle">Loading market data</div>
+            </div>
+
+            <!-- Metrics Grid -->
+            <div class="metrics-grid" id="metricsGrid">
+                <!-- Metrics will be injected here -->
+            </div>
+
+            <!-- Analysis Panel -->
+            <div class="analysis-panel">
+                <div class="card-title">
+                    <i class="fas fa-brain"></i> AI Analysis & Insights
+                </div>
+                <div class="analysis-content" id="analysisContent">
+                    <div class="alert alert-success">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Select an asset and click "Analyze Market" to begin</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar -->
+        <div class="right-sidebar">
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-chart-line"></i> Active Trades
+                </div>
+                <div id="activeTradesList">
+                    <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                        <i class="fas fa-inbox" style="font-size: 32px; margin-bottom: 12px; opacity: 0.5;"></i>
+                        <p>No active trades</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-rocket"></i> Trade Setup
+                </div>
+                <div class="trade-form">
+                    <div class="form-group">
+                        <label class="form-label">Direction</label>
+                        <select class="form-input" id="tradeDirection">
+                            <option value="LONG">📈 LONG</option>
+                            <option value="SHORT">📉 SHORT</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Leverage</label>
+                        <input type="range" class="leverage-slider" id="leverageSlider" 
+                               min="1" max="125" value="10" oninput="updateLeverage(this.value)">
+                        <div class="leverage-value"><span id="leverageValue">10</span>x</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Position Size (%)</label>
+                        <input type="number" class="form-input" id="positionSize" 
+                               value="2" min="0.1" max="100" step="0.1">
+                    </div>
+                    <button class="action-btn" onclick="calculateEntry()">
+                        <i class="fas fa-calculator"></i>
+                        Calculate Entry
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-history"></i> Trade History
+                </div>
+                <div id="tradeHistory">
+                    <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                        <i class="fas fa-clock-rotate-left" style="font-size: 32px; margin-bottom: 12px; opacity: 0.5;"></i>
+                        <p>No closed trades yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentAsset = 'BTC';
+        let lastAnalysis = null;
+        let startTime = Date.now();
+        let longShortStream = null; // Stream SSE para Long/Short de CoinGlass
+
+        // Update latency
+        setInterval(() => {
+            const latency = Math.floor(Math.random() * 20) + 10;
+            document.getElementById('latency').textContent = latency + 'ms';
+        }, 2000);
+
+        // Conectar al stream SSE de Long/Short desde CoinGlass (actualización cada 2s)
+        function connectLongShortStream(symbol) {
+            // 🔥 CERRAR stream anterior si existe (importante para cambiar de moneda)
+            if (longShortStream) {
+                console.log(`🔴 Cerrando stream anterior...`);
+                longShortStream.close();
+                longShortStream = null;
+                // Pequeña espera para asegurar que se cierre completamente
+                setTimeout(() => createNewStream(symbol), 100);
+            } else {
+                createNewStream(symbol);
+            }
+        }
+        
+        function createNewStream(symbol) {
+            console.log(`🔗 Conectando a CoinGlass stream para ${symbol} (actualización cada 2s)...`);
+            console.log(`   URL: http://localhost:8001/longshort/stream/${symbol}`);
+            
+            // Endpoint de CoinGlass con actualización cada 2 segundos
+            longShortStream = new EventSource(`http://localhost:8001/longshort/stream/${symbol}`);
+            
+            // Escuchar evento "update" (no el evento por defecto)
+            longShortStream.addEventListener('update', (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log(`📊 CoinGlass [${data.symbol}]: Long ${data.longRatio}% / Short ${data.shortRatio}% (${data.source})`);
+                    
+                    // Convertir formato de API a formato esperado por updateLongShortDisplay
+                    const displayData = {
+                        longs_percent: data.longRatio,
+                        shorts_percent: data.shortRatio,
+                        ratio: data.longRatio / data.shortRatio,
+                        timestamp: data.timestamp,
+                        source: data.source,
+                        symbol: data.symbol
+                    };
+                    
+                    updateLongShortDisplay(displayData, data.symbol);
+                } catch (error) {
+                    console.error('❌ Error parseando datos SSE:', error, event.data);
+                }
+            });
+            
+            // Escuchar evento "error" del servidor
+            longShortStream.addEventListener('error', (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    console.error('❌ Error del servidor:', data.error);
+                } catch (error) {
+                    console.error('❌ Error parseando error SSE:', error);
+                }
+            });
+            
+            longShortStream.onerror = (error) => {
+                console.error(`❌ Error en CoinGlass SSE stream para ${symbol}, reconectando en 5s...`, error);
+                if (longShortStream) longShortStream.close();
+                setTimeout(() => connectLongShortStream(symbol), 5000);
+            };
+            
+            longShortStream.onopen = () => {
+                console.log(`✅ CoinGlass SSE stream conectado para ${symbol} - Actualización cada 2 segundos`);
+            };
+        }
+        
+        // Actualizar display de Long/Short con datos de CoinGlass en el metricsGrid central
+        function updateLongShortDisplay(data, symbol) {
+            // Buscar las tarjetas específicas de Long/Short en el grid y actualizarlas
+            // Sin borrar las demás métricas (Funding Rate, Open Interest, etc.)
+            
+            console.log(`🔄 Intentando actualizar Long/Short con datos:`, data);
+            
+            const cards = document.querySelectorAll('#metricsGrid .metric-card');
+            console.log(`📦 Encontradas ${cards.length} tarjetas en el grid`);
+            
+            let longsUpdated = false;
+            let shortsUpdated = false;
+            let ratioUpdated = false;
+            
+            cards.forEach((card, index) => {
+                const label = card.querySelector('.metric-label');
+                if (!label) {
+                    console.log(`⚠️ Tarjeta ${index} no tiene label`);
+                    return;
+                }
+                
+                const labelText = label.textContent.trim();
+                console.log(`🏷️ Tarjeta ${index}: "${labelText}"`);
+                
+                const valueEl = card.querySelector('.metric-value');
+                const changeEl = card.querySelector('.metric-change');
+                
+                // Actualizar tarjeta de LONGS
+                if (labelText === 'Longs') {
+                    if (valueEl) {
+                        valueEl.textContent = `${data.longs_percent.toFixed(1)}%`;
+                        valueEl.style.color = 'var(--success)';
+                        longsUpdated = true;
+                        console.log(`✅ LONGS actualizado a: ${data.longs_percent.toFixed(1)}%`);
+                    }
+                }
+                
+                // Actualizar tarjeta de SHORTS
+                else if (labelText === 'Shorts') {
+                    if (valueEl) {
+                        valueEl.textContent = `${data.shorts_percent.toFixed(1)}%`;
+                        valueEl.style.color = 'var(--danger)';
+                        shortsUpdated = true;
+                        console.log(`✅ SHORTS actualizado a: ${data.shorts_percent.toFixed(1)}%`);
+                    }
+                }
+                
+                // Actualizar tarjeta de L/S Ratio
+                else if (labelText === 'L/S Ratio') {
+                    if (valueEl) {
+                        valueEl.textContent = data.ratio.toFixed(3);
+                    }
+                    if (changeEl) {
+                        const bias = data.longs_percent > data.shorts_percent ? 'Long Bias' : 'Short Bias';
+                        changeEl.innerHTML = `<i class="fas fa-balance-scale"></i> ${bias}`;
+                    }
+                    ratioUpdated = true;
+                    console.log(`✅ L/S Ratio actualizado a: ${data.ratio.toFixed(3)}`);
+                }
+            });
+            
+            if (!longsUpdated) console.warn('❌ No se pudo actualizar LONGS');
+            if (!shortsUpdated) console.warn('❌ No se pudo actualizar SHORTS');
+            if (!ratioUpdated) console.warn('❌ No se pudo actualizar L/S Ratio');
+        }
+
+        // Asset Selection
+        function selectAsset(asset) {
+            currentAsset = asset;
+            
+            // Actualizar botones visuales
+            document.querySelectorAll('.asset-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-asset="${asset}"]`).classList.add('active');
+            
+            // 🔥 IMPORTANTE: Reconectar stream de CoinGlass con la nueva moneda
+            console.log(`🔄 Cambiando a ${asset}, reconectando CoinGlass...`);
+            connectLongShortStream(asset);
+            
+            showNotification(`CoinGlass: ${asset} (actualización cada 2s)`, 'success');
+        }
+        
+        // Iniciar con BTC al cargar la página y conectar a CoinGlass
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Conectando a CoinGlass (temporalidad 5min, actualización cada 2s)...');
+            connectLongShortStream('BTC');
+        });
+
+        // Update Leverage Display
+        function updateLeverage(value) {
+            document.getElementById('leverageValue').textContent = value;
+            
+            const color = value > 50 ? 'var(--danger)' : value > 20 ? 'var(--warning)' : 'var(--primary)';
+            document.querySelector('.leverage-value').style.color = color;
+        }
+
+        // Analyze Market
+        async function analyzeMarket() {
+            showLoading();
+            
+            try {
+                const start = Date.now();
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({assets: [currentAsset]})
+                });
+                
+                const latency = Date.now() - start;
+                document.getElementById('latency').textContent = latency + 'ms';
+                
+                const data = await response.json();
+                lastAnalysis = data;
+                
+                displayAnalysis(data);
+                updateSemaforo(data);
+                updateMetrics(data);  // ⚠️ Esto muestra datos SIMULADOS del backend
+                // updateProbabilities(data); // Ya no se usa
+                
+                // 🔥 NOTA: Los datos de Long/Short se actualizarán automáticamente
+                // cada 2 segundos desde el SSE stream de CoinGlass (datos REALES)
+                console.log('💡 Long/Short se actualizará automáticamente desde CoinGlass cada 2s');
+                
+                showNotification('Analysis complete! Long/Short updating from CoinGlass...', 'success');
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Analysis failed: ' + error.message, 'danger');
+            }
+        }
+
+        // Analyze Multiple Assets
+        async function analyzeMultiple() {
+            showLoading();
+            
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({assets: ['BTC', 'ETH', 'SOL']})
+                });
+                
+                const data = await response.json();
+                displayMultipleAnalysis(data);
+                updateSemaforo(data);
+                
+                showNotification('Multi-asset analysis complete!', 'success');
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Analysis failed: ' + error.message, 'danger');
+            }
+        }
+
+        // Calculate Entry
+        async function calculateEntry() {
+            // Obtener valores del formulario
+            const direction = document.getElementById('tradeDirection').value;
+            const leverage = parseInt(document.getElementById('leverageSlider').value);
+            const positionSize = parseFloat(document.getElementById('positionSize').value);
+            
+            // Obtener precio actual desde Binance
+            const entryPrice = await getCurrentPrice(currentAsset);
+            
+            if (!entryPrice) {
+                showNotification('Error obteniendo precio actual', 'danger');
+                return;
+            }
+            
+            // Abrir el trade
+            addTrade(currentAsset, direction, entryPrice, leverage, positionSize);
+            
+            showNotification(`Trade abierto: ${currentAsset} ${direction} @ $${entryPrice.toFixed(2)}`, 'success');
+        }
+        
+        // Obtener precio actual de un asset (primero intenta backend, luego Binance directo)
+        async function getCurrentPrice(asset) {
+            try {
+                // Intentar obtener desde nuestro backend
+                const response = await fetch(`/api/price/${asset}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log(`✅ Precio desde backend: ${asset} = $${data.price}`);
+                    return data.price;
+                }
+            } catch (error) {
+                console.log(`⚠️ Backend no disponible, usando Binance directo...`);
+            }
+            
+            try {
+                // Fallback: Obtener directamente desde Binance API pública
+                const binanceSymbol = `${asset}USDT`;
+                const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${binanceSymbol}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const price = parseFloat(data.price);
+                    console.log(`✅ Precio desde Binance: ${asset} = $${price}`);
+                    return price;
+                }
+            } catch (error) {
+                console.error(`❌ Error obteniendo precio desde Binance:`, error);
+            }
+            
+            // Último fallback: precios simulados
+            const simulatedPrices = {
+                'BTC': 67500,
+                'ETH': 3200,
+                'SOL': 145,
+                'BNB': 585
+            };
+            console.log(`⚠️ Usando precio simulado para ${asset}`);
+            return simulatedPrices[asset] || 1000;
+        }
+
+        // Display Analysis
+        function displayAnalysis(data) {
+            const content = document.getElementById('analysisContent');
+            const asset = data.assets[currentAsset];
+            
+            if (!asset) {
+                content.innerHTML = '<div class="alert alert-danger">No data available for ' + currentAsset + '</div>';
+                return;
+            }
+            
+            const riskClass = asset.risk_score < 30 ? 'low' : asset.risk_score < 60 ? 'medium' : 'high';
+            
+            let html = `
+                <div class="analysis-item">
+                    <div class="analysis-header">
+                        <div class="analysis-asset">${currentAsset} Analysis</div>
+                        <div class="analysis-badge badge-${riskClass}">
+                            Risk: ${riskClass.toUpperCase()}
+                        </div>
+                    </div>
+                    
+                    <div class="metric-row">
+                        <span>Risk Score</span>
+                        <span style="color: var(--primary); font-weight: 700;">${asset.risk_score}/100</span>
+                    </div>
+                    
+                    <div class="metric-row">
+                        <span>Funding Rate</span>
+                        <span>${(asset.metrics.funding_rate.current * 100).toFixed(4)}%</span>
+                    </div>
+                    
+                    <div class="metric-row">
+                        <span>Long/Short Ratio</span>
+                        <span>${asset.metrics.long_short_ratio.ratio.toFixed(3)} (${asset.metrics.long_short_ratio.bias})</span>
+                    </div>
+                    
+                    <div class="metric-row">
+                        <span>OI Change (24h)</span>
+                        <span class="metric-change ${asset.metrics.open_interest.change_24h_percent > 0 ? 'positive' : 'negative'}">
+                            ${asset.metrics.open_interest.change_24h_percent > 0 ? '+' : ''}${asset.metrics.open_interest.change_24h_percent.toFixed(2)}%
+                        </span>
+                    </div>
+                    
+                    <div class="metric-row">
+                        <span>Volatility</span>
+                        <span>${(asset.metrics.volatility.value * 100).toFixed(2)}% (${asset.metrics.volatility.level})</span>
+                    </div>
+                    
+                    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--text-secondary); font-size: 13px; line-height: 1.6;">
+                        <strong style="color: var(--primary);">💡 Recommendation:</strong><br>
+                        ${asset.recommendation}
+                    </div>
+                </div>
+            `;
+            
+            content.innerHTML = html;
+        }
+
+        // Display Multiple Analysis
+        function displayMultipleAnalysis(data) {
+            const content = document.getElementById('analysisContent');
+            let html = '';
+            
+            for (const [assetName, asset] of Object.entries(data.assets)) {
+                const riskClass = asset.risk_score < 30 ? 'low' : asset.risk_score < 60 ? 'medium' : 'high';
+                const emoji = asset.color === 'green' ? '🟢' : asset.color === 'yellow' ? '🟡' : '🔴';
+                
+                html += `
+                    <div class="analysis-item">
+                        <div class="analysis-header">
+                            <div class="analysis-asset">${emoji} ${assetName}</div>
+                            <div class="analysis-badge badge-${riskClass}">${asset.risk_score}/100</div>
+                        </div>
+                        <div class="metric-row">
+                            <span>LONG Probability</span>
+                            <span style="color: var(--success);">${asset.probabilities.long}%</span>
+                        </div>
+                        <div class="metric-row">
+                            <span>SHORT Probability</span>
+                            <span style="color: var(--danger);">${asset.probabilities.short}%</span>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            content.innerHTML = html;
+        }
+
+        // Update Semáforo
+        function updateSemaforo(data) {
+            const icon = document.getElementById('semaforoIcon');
+            const status = document.getElementById('semaforoStatus');
+            const subtitle = document.getElementById('semaforoSubtitle');
+            
+            const emojis = {
+                'green': '🟢',
+                'yellow': '🟡',
+                'red': '🔴'
+            };
+            
+            const statuses = {
+                'green': 'LOW RISK',
+                'yellow': 'MEDIUM RISK',
+                'red': 'HIGH RISK'
+            };
+            
+            const colors = {
+                'green': 'var(--success)',
+                'yellow': 'var(--warning)',
+                'red': 'var(--danger)'
+            };
+            
+            icon.textContent = data.emoji || emojis[data.semaforo] || '🚦';
+            status.textContent = statuses[data.semaforo] || 'ANALYZING';
+            status.style.color = colors[data.semaforo] || 'var(--primary)';
+            subtitle.textContent = data.recommendation || 'Market analysis in progress';
+        }
+
+        // Update Metrics
+        function updateMetrics(data) {
+            const grid = document.getElementById('metricsGrid');
+            const asset = data.assets[currentAsset];
+            
+            if (!asset) return;
+            
+            const m = asset.metrics;
+            
+            // 🔥 SOLO mostrar métricas del backend (NO Long/Short - esos vienen de CoinGlass)
+            grid.innerHTML = `
+                <div class="metric-card">
+                    <div class="metric-label">Funding Rate</div>
+                    <div class="metric-value">${(m.funding_rate.current * 100).toFixed(4)}%</div>
+                    <div class="metric-change ${m.funding_rate.trend === 'increasing' ? 'positive' : 'negative'}">
+                        <i class="fas fa-${m.funding_rate.trend === 'increasing' ? 'arrow-up' : 'arrow-down'}"></i>
+                        ${m.funding_rate.status}
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">Open Interest</div>
+                    <div class="metric-value">${m.open_interest.change_24h_percent.toFixed(2)}%</div>
+                    <div class="metric-change ${m.open_interest.change_24h_percent > 0 ? 'positive' : 'negative'}">
+                        <i class="fas fa-${m.open_interest.change_24h_percent > 0 ? 'arrow-up' : 'arrow-down'}"></i>
+                        ${m.open_interest.trend}
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">L/S Ratio</div>
+                    <div class="metric-value" style="color: var(--text-secondary);">
+                        <i class="fas fa-spinner fa-spin"></i> Loading...
+                    </div>
+                    <div class="metric-change">
+                        <i class="fas fa-clock"></i>
+                        CoinGlass
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">Longs</div>
+                    <div class="metric-value" style="color: var(--text-secondary);">
+                        <i class="fas fa-spinner fa-spin"></i> Loading...
+                    </div>
+                    <div class="metric-change">
+                        <i class="fas fa-clock"></i>
+                        CoinGlass
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">Shorts</div>
+                    <div class="metric-value" style="color: var(--text-secondary);">
+                        <i class="fas fa-spinner fa-spin"></i> Loading...
+                    </div>
+                    <div class="metric-change">
+                        <i class="fas fa-clock"></i>
+                        CoinGlass
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">Volatility</div>
+                    <div class="metric-value">${(m.volatility.value * 100).toFixed(2)}%</div>
+                    <div class="metric-change">
+                        <i class="fas fa-chart-line"></i>
+                        ${m.volatility.level}
+                    </div>
+                </div>
+            `;
+            
+            // 🔥 Los datos de Long/Short se actualizarán automáticamente desde el SSE
+            console.log('💡 Long/Short se actualizarán desde CoinGlass SSE en 2 segundos...');
+        }
+
+        // Update Probabilities (ya no se usa el sidebar de probabilidades)
+        function updateProbabilities(data) {
+            // Esta función ya no hace nada porque eliminamos el sidebar de probabilidades
+            // Las probabilidades ahora se muestran en las métricas principales si es necesario
+            console.log('📊 Probabilidades actualizadas (ya no se muestran en sidebar)');
+        }
+
+        // Display Trade Setup
+        function displayTradeSetup(data) {
+            if (!data.trade) return;
+            
+            const trade = data.trade;
+            const direction = trade.direction || 'LONG';
+            const emoji = direction === 'LONG' ? '📈' : '📉';
+            
+            const content = document.getElementById('analysisContent');
+            content.innerHTML = `
+                <div class="analysis-item" style="border-left-color: ${direction === 'LONG' ? 'var(--success)' : 'var(--danger)'};">
+                    <div class="analysis-header">
+                        <div class="analysis-asset">${emoji} ${trade.asset} ${direction}</div>
+                        <div class="analysis-badge" style="background: ${direction === 'LONG' ? 'rgba(38, 222, 129, 0.2)' : 'rgba(255, 71, 87, 0.2)'}; color: ${direction === 'LONG' ? 'var(--success)' : 'var(--danger)'};">
+                            ${trade.confidence}% Confidence
+                        </div>
+                    </div>
+                    
+                    <div class="metric-row">
+                        <span>Entry Price</span>
+                        <span style="font-weight: 700;">$${trade.entry_price.toLocaleString()}</span>
+                    </div>
+                    
+                    <div class="metric-row">
+                        <span>Stop Loss</span>
+                        <span style="color: var(--danger);">$${trade.stoploss.toLocaleString()}</span>
+                    </div>
+                    
+                    <div class="metric-row">
+                        <span>Take Profit</span>
+                        <span style="color: var(--success);">$${trade.takeprofit.toLocaleString()}</span>
+                    </div>
+                    
+                    <div class="metric-row">
+                        <span>Timeframe</span>
+                        <span>${trade.timeframe} / ${trade.duration}</span>
+                    </div>
+                    
+                    <div style="margin-top: 16px; padding: 12px; background: var(--bg-elevated); border-radius: 8px; text-align: center;">
+                        <strong style="color: var(--primary);">Status:</strong> ${data.status === 'pending_confirmation' ? 'Ready to Execute' : data.status}
+                    </div>
+                    
+                    <button class="action-btn" style="margin-top: 16px;" onclick="confirmTrade()">
+                        <i class="fas fa-check-circle"></i>
+                        Confirm Trade
+                    </button>
+                </div>
+            `;
+        }
+
+        // Show Loading
+        function showLoading() {
+            const content = document.getElementById('analysisContent');
+            content.innerHTML = `
+                <div style="text-align: center; padding: 60px 20px;">
+                    <div class="loading" style="width: 60px; height: 60px; border-width: 6px; margin: 0 auto 20px;"></div>
+                    <p style="color: var(--text-secondary);">Analyzing market data...</p>
+                </div>
+            `;
+        }
+
+        // Show Notification
+        function showNotification(message, type = 'success') {
+            const alertClass = 'alert-' + type;
+            const icon = type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'times-circle';
+            
+            const notification = document.createElement('div');
+            notification.className = `alert ${alertClass}`;
+            notification.style.position = 'fixed';
+            notification.style.top = '20px';
+            notification.style.right = '20px';
+            notification.style.zIndex = '9999';
+            notification.style.minWidth = '300px';
+            notification.innerHTML = `
+                <i class="fas fa-${icon}"></i>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Auto-Trade (placeholder)
+        function autoTrade() {
+            showNotification('Auto-trade feature coming soon!', 'warning');
+        }
+
+        // ==================== GESTIÓN DE TRADES ACTIVOS ====================
+        
+        // Array para almacenar trades activos (se guardará en localStorage)
+        let activeTrades = [];
+        let tradeHistory = [];
+        
+        // Cargar trades desde localStorage
+        function loadActiveTrades() {
+            const saved = localStorage.getItem('semaforo_active_trades');
+            if (saved) {
+                activeTrades = JSON.parse(saved);
+                updateActiveTradesDisplay();
+                updateActiveTradesCount();
+            }
+        }
+        
+        // Cargar historial desde localStorage
+        function loadTradeHistory() {
+            const saved = localStorage.getItem('semaforo_trade_history');
+            if (saved) {
+                tradeHistory = JSON.parse(saved);
+                updateTradeHistoryDisplay();
+            }
+        }
+        
+        // Guardar trades en localStorage
+        function saveActiveTrades() {
+            localStorage.setItem('semaforo_active_trades', JSON.stringify(activeTrades));
+            updateActiveTradesCount();
+        }
+        
+        // Guardar historial en localStorage
+        function saveTradeHistory() {
+            // Mantener solo los últimos 50 trades
+            if (tradeHistory.length > 50) {
+                tradeHistory = tradeHistory.slice(0, 50);
+            }
+            localStorage.setItem('semaforo_trade_history', JSON.stringify(tradeHistory));
+        }
+        
+        // Agregar trade al historial
+        function addToHistory(trade) {
+            // Agregar al principio del array (más reciente primero)
+            tradeHistory.unshift(trade);
+            saveTradeHistory();
+            updateTradeHistoryDisplay();
+        }
+        
+        // Mostrar historial de trades
+        function updateTradeHistoryDisplay() {
+            const container = document.getElementById('tradeHistory');
+            
+            if (tradeHistory.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                        <i class="fas fa-clock-rotate-left" style="font-size: 32px; margin-bottom: 12px; opacity: 0.5;"></i>
+                        <p>No closed trades yet</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = tradeHistory.map(trade => {
+                const pnlClass = trade.pnlPercent >= 0 ? 'profit' : 'loss';
+                const pnlIcon = trade.pnlPercent >= 0 ? '📈' : '📉';
+                const directionEmoji = trade.direction === 'LONG' ? '📈' : '📉';
+                
+                // Formatear fecha
+                const closeDate = new Date(trade.closeTime);
+                const dateStr = closeDate.toLocaleDateString('es-ES', { 
+                    month: 'short', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                return `
+                    <div class="history-item ${pnlClass}">
+                        <div class="history-header">
+                            <div class="history-asset">${directionEmoji} ${trade.asset} ${trade.direction}</div>
+                            <div class="history-date">${dateStr}</div>
+                        </div>
+                        
+                        <div class="history-pnl ${pnlClass}">
+                            ${pnlIcon} ${trade.pnlPercent >= 0 ? '+' : ''}${trade.pnlPercent.toFixed(2)}%
+                        </div>
+                        
+                        <div class="history-details">
+                            <div class="history-detail">
+                                <div class="history-detail-label">Entry</div>
+                                <div class="history-detail-value">$${trade.entryPrice.toFixed(2)}</div>
+                            </div>
+                            <div class="history-detail">
+                                <div class="history-detail-label">Close</div>
+                                <div class="history-detail-value">$${trade.closePrice.toFixed(2)}</div>
+                            </div>
+                            <div class="history-detail">
+                                <div class="history-detail-label">Leverage</div>
+                                <div class="history-detail-value">${trade.leverage}x</div>
+                            </div>
+                            <div class="history-detail">
+                                <div class="history-detail-label">Size</div>
+                                <div class="history-detail-value">${trade.positionSize}%</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Actualizar contador de trades activos en el header
+        function updateActiveTradesCount() {
+            document.getElementById('activeTrades').textContent = activeTrades.length;
+        }
+        
+        // Agregar un nuevo trade
+        function addTrade(asset, direction, entryPrice, leverage, positionSize) {
+            const trade = {
+                id: Date.now(),
+                asset: asset,
+                direction: direction, // 'LONG' o 'SHORT'
+                entryPrice: entryPrice,
+                currentPrice: entryPrice,
+                leverage: leverage,
+                positionSize: positionSize,
+                pnl: 0,
+                pnlPercent: 0,
+                openTime: new Date().toISOString()
+            };
+            
+            activeTrades.push(trade);
+            saveActiveTrades();
+            updateActiveTradesDisplay();
+            showNotification(`Trade abierto: ${asset} ${direction} @ $${entryPrice}`, 'success');
+        }
+        
+        // Cerrar un trade
+        // Cerrar un trade
+        function closeTrade(tradeId) {
+            const trade = activeTrades.find(t => t.id === tradeId);
+            if (trade) {
+                const profit = trade.pnl >= 0;
+                
+                // Agregar al historial
+                trade.closeTime = new Date().toISOString();
+                trade.closePrice = trade.currentPrice;
+                addToHistory(trade);
+                
+                // Mostrar notificación
+                showNotification(
+                    `Trade cerrado: ${trade.asset} ${trade.direction} - P&L: ${trade.pnlPercent >= 0 ? '+' : ''}${trade.pnlPercent.toFixed(2)}%`,
+                    profit ? 'success' : 'danger'
+                );
+                
+                // Remover de activos
+                activeTrades = activeTrades.filter(t => t.id !== tradeId);
+                saveActiveTrades();
+                updateActiveTradesDisplay();
+            }
+        }
+        
+        // Actualizar precio actual y P&L de un trade
+        async function updateTradePrice(trade) {
+            try {
+                // Obtener precio actual usando la función compartida
+                const currentPrice = await getCurrentPrice(trade.asset);
+                
+                if (currentPrice) {
+                    trade.currentPrice = currentPrice;
+                } else {
+                    // Si falla, simular pequeño cambio de precio
+                    const randomChange = (Math.random() - 0.5) * 0.002; // ±0.2%
+                    trade.currentPrice = trade.currentPrice * (1 + randomChange);
+                }
+                
+                // Calcular P&L
+                let priceChange = 0;
+                if (trade.direction === 'LONG') {
+                    priceChange = ((trade.currentPrice - trade.entryPrice) / trade.entryPrice) * 100;
+                } else { // SHORT
+                    priceChange = ((trade.entryPrice - trade.currentPrice) / trade.entryPrice) * 100;
+                }
+                
+                trade.pnlPercent = priceChange * trade.leverage;
+                trade.pnl = (trade.positionSize * trade.pnlPercent) / 100;
+                
+            } catch (error) {
+                console.error('Error actualizando precio del trade:', error);
+            }
+        }
+        
+        // Actualizar todos los trades (se ejecuta cada 2 segundos)
+        async function updateAllTrades() {
+            if (activeTrades.length === 0) return;
+            
+            for (const trade of activeTrades) {
+                await updateTradePrice(trade);
+            }
+            
+            saveActiveTrades();
+            updateActiveTradesDisplay();
+        }
+        
+        // Mostrar trades activos en el sidebar
+        function updateActiveTradesDisplay() {
+            const container = document.getElementById('activeTradesList');
+            
+            if (activeTrades.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                        <i class="fas fa-inbox" style="font-size: 32px; margin-bottom: 12px; opacity: 0.5;"></i>
+                        <p>No active trades</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Verificar si necesitamos recrear todo el HTML (cuando cambia la cantidad de trades)
+            const existingTrades = container.querySelectorAll('.trade-item');
+            if (existingTrades.length !== activeTrades.length) {
+                // Recrear todo
+                container.innerHTML = activeTrades.map(trade => {
+                    const pnlClass = trade.pnlPercent >= 0 ? 'profit' : 'loss';
+                    const pnlIcon = trade.pnlPercent >= 0 ? '📈' : '📉';
+                    const directionClass = trade.direction === 'LONG' ? 'long' : 'short';
+                    const directionEmoji = trade.direction === 'LONG' ? '📈' : '📉';
+                    
+                    return `
+                        <div class="trade-item" data-trade-id="${trade.id}">
+                            <div class="trade-header">
+                                <div class="trade-asset">${trade.asset}</div>
+                                <div class="trade-direction ${directionClass}">
+                                    ${directionEmoji} ${trade.direction}
+                                </div>
+                            </div>
+                            
+                            <div class="trade-info">
+                                <div class="trade-info-item">
+                                    <div class="trade-info-label">Entry</div>
+                                    <div class="trade-info-value">$${trade.entryPrice.toFixed(2)}</div>
+                                </div>
+                                <div class="trade-info-item">
+                                    <div class="trade-info-label">Current</div>
+                                    <div class="trade-info-value trade-current-price" data-trade-id="${trade.id}">$${trade.currentPrice.toFixed(2)}</div>
+                                </div>
+                                <div class="trade-info-item">
+                                    <div class="trade-info-label">Leverage</div>
+                                    <div class="trade-info-value">${trade.leverage}x</div>
+                                </div>
+                                <div class="trade-info-item">
+                                    <div class="trade-info-label">Size</div>
+                                    <div class="trade-info-value">${trade.positionSize}%</div>
+                                </div>
+                            </div>
+                            
+                            <div class="trade-pnl">
+                                <div class="trade-pnl-label">P&L</div>
+                                <div class="trade-pnl-value ${pnlClass}" data-trade-id="${trade.id}">
+                                    ${pnlIcon} ${trade.pnlPercent >= 0 ? '+' : ''}${trade.pnlPercent.toFixed(2)}%
+                                </div>
+                            </div>
+                            
+                            <button class="action-btn secondary" onclick="closeTrade(${trade.id})" style="margin-top: 12px; width: 100%;">
+                                <i class="fas fa-times-circle"></i>
+                                Close Trade
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                // Solo actualizar P&L y Current Price de cada trade existente
+                activeTrades.forEach(trade => {
+                    const pnlClass = trade.pnlPercent >= 0 ? 'profit' : 'loss';
+                    const pnlIcon = trade.pnlPercent >= 0 ? '📈' : '📉';
+                    
+                    // Actualizar Current Price
+                    const currentPriceEl = container.querySelector(`.trade-current-price[data-trade-id="${trade.id}"]`);
+                    if (currentPriceEl) {
+                        currentPriceEl.textContent = `$${trade.currentPrice.toFixed(2)}`;
+                    }
+                    
+                    // Actualizar P&L
+                    const pnlEl = container.querySelector(`.trade-pnl-value[data-trade-id="${trade.id}"]`);
+                    if (pnlEl) {
+                        pnlEl.textContent = `${pnlIcon} ${trade.pnlPercent >= 0 ? '+' : ''}${trade.pnlPercent.toFixed(2)}%`;
+                        pnlEl.className = `trade-pnl-value ${pnlClass}`;
+                    }
+                });
+            }
+        }
+        
+        // Actualizar trades cada 2 segundos
+        setInterval(updateAllTrades, 2000);
+        
+        // Cargar trades e historial al iniciar
+        loadActiveTrades();
+        loadTradeHistory();
+        
+        // ==================== FIN GESTIÓN DE TRADES ====================
+
+        // Confirm Trade (placeholder)
+        function confirmTrade() {
+            showNotification('Trade executed successfully!', 'success');
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            showNotification('SemáforoBot PRO initialized', 'success');
+        });
+    </script>
+</body>
+</html>

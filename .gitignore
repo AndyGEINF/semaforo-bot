@@ -1,0 +1,269 @@
+# ============================================
+# Python
+# ============================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# ============================================
+# Entornos Virtuales
+# ============================================
+venv/
+env/
+ENV/
+.venv
+env.bak/
+venv.bak/
+
+# ============================================
+# Variables de Entorno y Secretos
+# ============================================
+.env
+.env.local
+.env.*.local
+*.env
+!.env.example
+
+# API Keys y configuración sensible
+config.local.json
+secrets.json
+credentials.json
+
+# ============================================
+# IDEs y Editores
+# ============================================
+# VSCode
+.vscode/
+.vscode-test/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+out/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+.netrwhist
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+
+# ============================================
+# Sistema Operativo
+# ============================================
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ============================================
+# Logs y Debugging
+# ============================================
+*.log
+logs/
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.npm
+
+# ============================================
+# Base de Datos
+# ============================================
+# SQLite
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+
+# Redis
+redis_data/
+dump.rdb
+appendonly.aof
+
+# ============================================
+# Playwright y Navegadores
+# ============================================
+# Playwright browsers (se instalan automáticamente)
+.playwright/
+playwright-report/
+test-results/
+
+# Screenshots y videos de testing
+screenshots/
+videos/
+traces/
+
+# ============================================
+# Datos y Archivos Temporales
+# ============================================
+# Archivos temporales del proyecto
+*.tmp
+*.temp
+*.bak
+*.cache
+*.swp
+*.swo
+temp/
+tmp/
+
+# Datos de scraping
+data/
+scraping_data/
+coinglass_cache/
+*.json.bak
+
+# Backups
+backups/
+backup_*/
+*.backup
+
+# ============================================
+# Node.js (si usas npm para frontend)
+# ============================================
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# ============================================
+# Archivos de Desarrollo
+# ============================================
+# Notebooks de Jupyter
+.ipynb_checkpoints
+*.ipynb
+
+# Archivos de testing locales
+test_*.html
+debug_*.py
+playground.py
+
+# Documentos de desarrollo (mantener los importantes)
+NOTES.md
+TODO.md
+SCRATCH.md
+
+# ============================================
+# Deployment y CI/CD
+# ============================================
+# Railway
+.railway/
+
+# Heroku
+.heroku/
+
+# Docker (si lo usas)
+.dockerignore.bak
+docker-compose.override.yml
+
+# ============================================
+# Archivos Específicos del Proyecto
+# ============================================
+# Datos de Redis locales
+redis-data/
+
+# Caché de precios y análisis
+price_cache/
+analysis_cache/
+
+# Archivos de configuración local
+config.local.json
+settings.local.json
+
+# Archivos de prueba generados
+test_output/
+debug_output/
+
+# ============================================
+# Mantener Archivos Importantes
+# ============================================
+# NO ignorar estos archivos críticos:
+!.env.example
+!.gitignore
+!README.md
+!DEPLOYMENT.md
+!INSTRUCCIONES_SCRAPING_COINGLASS.md
+!requirements.txt
+!render.yaml
+!Procfile
+!config.json
