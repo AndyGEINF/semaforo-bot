@@ -29,7 +29,6 @@ from strategy.entry_optimizer import EntryOptimizer
 from strategy.memory_manager import MemoryManager
 from data_adapter.exchange_adapter import ExchangeAdapter  # ← Cambiado de CoinGlass
 from redis_store import RedisStore
-from longshort_autoupdate import add_longshort_endpoints  # ← Nuevo: SSE para Long/Short
 
 # Cargar variables de entorno
 load_dotenv()
@@ -56,9 +55,6 @@ app.add_middleware(
 
 # Montar directorio estático
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
-# Agregar endpoints de Long/Short con SSE
-add_longshort_endpoints(app)
 
 # Estado global del bot
 class BotState:
@@ -170,6 +166,12 @@ async def shutdown_event():
 async def root():
     """Sirve la interfaz web principal"""
     return FileResponse("static/index_pro.html")
+
+
+@app.get("/favicon.png", response_class=FileResponse)
+async def favicon():
+    """Sirve el favicon desde la carpeta static"""
+    return FileResponse("static/favicon.png")
 
 
 @app.get("/api/info")

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Optimizar Logo para Favicon</title>
+</head>
+<body>
+    <h2>Optimizador de Favicon</h2>
+    <input type="file" id="logoInput" accept="image/*">
+    <br><br>
+    <canvas id="canvas16" width="16" height="16" style="border:1px solid #000; image-rendering: pixelated;"></canvas>
+    <canvas id="canvas32" width="32" height="32" style="border:1px solid #000; image-rendering: pixelated;"></canvas>
+    <canvas id="canvas64" width="64" height="64" style="border:1px solid #000;"></canvas>
+    <canvas id="canvas128" width="128" height="128" style="border:1px solid #000;"></canvas>
+    <br><br>
+    <button id="download16">Descargar 16x16</button>
+    <button id="download32">Descargar 32x32</button>
+    <button id="download64">Descargar 64x64</button>
+    <button id="downloadICO">Descargar .ICO (todos los tamaños)</button>
+
+    <script>
+        const input = document.getElementById('logoInput');
+        const canvas16 = document.getElementById('canvas16');
+        const canvas32 = document.getElementById('canvas32');
+        const canvas64 = document.getElementById('canvas64');
+        const canvas128 = document.getElementById('canvas128');
+        const ctx16 = canvas16.getContext('2d');
+        const ctx32 = canvas32.getContext('2d');
+        const ctx64 = canvas64.getContext('2d');
+        const ctx128 = canvas128.getContext('2d');
+
+        input.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    // Dibujar en diferentes tamaños
+                    ctx16.imageSmoothingEnabled = true;
+                    ctx16.imageSmoothingQuality = 'high';
+                    ctx16.drawImage(img, 0, 0, 16, 16);
+                    
+                    ctx32.imageSmoothingEnabled = true;
+                    ctx32.imageSmoothingQuality = 'high';
+                    ctx32.drawImage(img, 0, 0, 32, 32);
+                    
+                    ctx64.imageSmoothingEnabled = true;
+                    ctx64.imageSmoothingQuality = 'high';
+                    ctx64.drawImage(img, 0, 0, 64, 64);
+                    
+                    ctx128.imageSmoothingEnabled = true;
+                    ctx128.imageSmoothingQuality = 'high';
+                    ctx128.drawImage(img, 0, 0, 128, 128);
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        document.getElementById('download16').addEventListener('click', () => {
+            downloadCanvas(canvas16, 'favicon-16x16.png');
+        });
+
+        document.getElementById('download32').addEventListener('click', () => {
+            downloadCanvas(canvas32, 'favicon-32x32.png');
+        });
+
+        document.getElementById('download64').addEventListener('click', () => {
+            downloadCanvas(canvas64, 'favicon-64x64.png');
+        });
+
+        document.getElementById('downloadICO').addEventListener('click', () => {
+            // Para .ICO usaremos el 32x32 como base
+            downloadCanvas(canvas32, 'favicon.ico');
+        });
+
+        function downloadCanvas(canvas, filename) {
+            canvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+        }
+    </script>
+
+    <hr>
+    <h3>Instrucciones:</h3>
+    <ol>
+        <li>Selecciona el archivo "logo web.png"</li>
+        <li>Descarga "favicon-32x32.png" (el más importante)</li>
+        <li>Guárdalo en la carpeta "static" como "favicon.png"</li>
+        <li>Refresca el navegador con Ctrl+F5</li>
+    </ol>
+</body>
+</html>

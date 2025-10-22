@@ -1,0 +1,53 @@
+<!-- Script para generar favicon.png desde SVG -->
+<!-- Este archivo se puede abrir en navegador para generar el PNG -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generar Favicon PNG</title>
+</head>
+<body>
+    <h2>Favicon Generator</h2>
+    <canvas id="canvas" width="32" height="32"></canvas>
+    <br>
+    <button onclick="download()">Descargar favicon.png</button>
+    
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Fondo oscuro
+        ctx.fillStyle = '#0a0e27';
+        ctx.fillRect(0, 0, 32, 32);
+        
+        // Luz verde (arriba)
+        ctx.fillStyle = '#26de81';
+        ctx.beginPath();
+        ctx.arc(16, 8, 3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Luz amarilla (medio)
+        ctx.fillStyle = '#ffa502';
+        ctx.beginPath();
+        ctx.arc(16, 16, 3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Luz roja (abajo)
+        ctx.fillStyle = '#ff4757';
+        ctx.beginPath();
+        ctx.arc(16, 24, 3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Marco
+        ctx.strokeStyle = '#00d4aa';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(11, 3, 10, 26);
+        
+        function download() {
+            const link = document.createElement('a');
+            link.download = 'favicon.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+    </script>
+</body>
+</html>
