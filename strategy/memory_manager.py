@@ -25,12 +25,15 @@ class MemoryManager:
         Inicializa el gestor de memoria
         
         Args:
-            redis_store: Instancia de RedisStore
+            redis_store: Instancia de RedisStore (puede ser None para modo volátil)
             config: Configuración del sistema
         """
         self.redis = redis_store
         self.config = config
         self.memory_config = config['memory']
+        
+        # Memoria volátil si no hay Redis
+        self.volatile_memory = {} if redis_store is None else None
         
         # Keys de Redis
         self.ANALYSIS_KEY = "semaforo:analysis:{asset}"
@@ -47,6 +50,13 @@ class MemoryManager:
             analysis_results: Dict con análisis por activo
         """
         try:
+            if self.redis is None:
+                # Modo volátil
+                for asset, data in analysis_results.items():
+                    key = self.ANALYSIS_KEY.format(asset=asset)
+                    self.volatile_memory[key] = data
+                return
+            
             ttl_seconds = self.memory_config['analysis_cache_minutes'] * 60
             
             for asset, data in analysis_results.items():
@@ -72,6 +82,11 @@ class MemoryManager:
         """
         try:
             key = self.ANALYSIS_KEY.format(asset=asset)
+            
+            if self.redis is None:
+                # Modo volátil
+                return self.volatile_memory.get(key)
+            
             data = await self.redis.get(key)
             
             if data:
@@ -90,6 +105,11 @@ class MemoryManager:
             trade_data: Datos del trade pendiente
         """
         try:
+            if self.redis is None:
+                # Modo volátil
+                self.volatile_memory[self.PENDING_TRADE_KEY] = trade_data
+                return
+            
             await self.redis.set(
                 self.PENDING_TRADE_KEY,
                 json.dumps(trade_data),
@@ -107,6 +127,10 @@ class MemoryManager:
             Dict con trade pendiente o None
         """
         try:
+            if self.redis is None:
+                # Modo volátil
+                return self.volatile_memory.get(self.PENDING_TRADE_KEY)
+            
             data = await self.redis.get(self.PENDING_TRADE_KEY)
             if data:
                 return json.loads(data)
@@ -119,6 +143,11 @@ class MemoryManager:
     async def clear_pending_trade(self) -> None:
         """Elimina el trade pendiente"""
         try:
+            if self.redis is None:
+                # Modo volátil
+                self.volatile_memory.pop(self.PENDING_TRADE_KEY, None)
+                return
+            
             await self.redis.delete(self.PENDING_TRADE_KEY)
         except Exception as e:
             print(f"⚠️ Error limpiando trade pendiente: {e}")
@@ -132,6 +161,15 @@ class MemoryManager:
             trade_data: Datos completos del trade
         """
         try:
+            if self.redis is None:
+                # Modo volátil
+                trade_key = f"{self.ACTIVE_TRADES_KEY}:{trade_id}"
+                self.volatile_memory[trade_key] = trade_data
+                if self.ACTIVE_TRADES_KEY not in self.volatile_memory:
+                    self.volatile_memory[self.ACTIVE_TRADES_KEY] = set()
+                self.volatile_memory[self.ACTIVE_TRADES_KEY].add(trade_id)
+                return
+            
             # Guardar trade individual
             trade_key = f"{self.ACTIVE_TRADES_KEY}:{trade_id}"
             await self.redis.set(
@@ -154,6 +192,16 @@ class MemoryManager:
             Dict con trade_id como key y datos como value
         """
         try:
+            if self.redis is None:
+                # Modo volátil
+                trade_ids = self.volatile_memory.get(self.ACTIVE_TRADES_KEY, set())
+                trades = {}
+                for trade_id in trade_ids:
+                    trade_key = f"{self.ACTIVE_TRADES_KEY}:{trade_id}"
+                    if trade_key in self.volatile_memory:
+                        trades[trade_id] = self.volatile_memory[trade_key]
+                return trades
+            
             # Obtener lista de IDs de trades activos
             trade_ids = await self.redis.smembers(self.ACTIVE_TRADES_KEY)
             

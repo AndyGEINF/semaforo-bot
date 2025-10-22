@@ -97,36 +97,46 @@ async def startup_event():
     print("🚀 Iniciando SemáforoBot...")
     
     try:
-        # Inicializar Redis Store
-        # Prioridad: REDIS_URL (Render/Railway) > REDIS_HOST/PORT (local)
+        # Inicializar Redis Store (opcional - modo degradado sin Redis)
+        # Prioridad: REDIS_URL (Render/Railway) > REDIS_HOST/PORT (local) > Sin Redis
+        redis_connected = False
         redis_url = os.getenv('REDIS_URL')
-        if redis_url:
-            # Validar esquema: redis://, rediss:// o unix://
-            from urllib.parse import urlparse
-            parsed = urlparse(redis_url)
-            if parsed.scheme in ("redis", "rediss", "unix"):
-                bot_state.redis_store = RedisStore(url=redis_url)
-                print("🔗 Usando REDIS_URL de entorno")
+        
+        try:
+            if redis_url:
+                # Validar esquema: redis://, rediss:// o unix://
+                from urllib.parse import urlparse
+                parsed = urlparse(redis_url)
+                if parsed.scheme in ("redis", "rediss", "unix"):
+                    bot_state.redis_store = RedisStore(url=redis_url)
+                    print("🔗 Usando REDIS_URL de entorno")
+                else:
+                    # Si la variable apunta a otro servicio (ej. postgresql), ignorarla
+                    print(f"⚠️ REDIS_URL tiene esquema '{parsed.scheme}://' (no es redis://)")
+                    print("   Intentando localhost:6379...")
+                    bot_state.redis_store = RedisStore(
+                        host=os.getenv('REDIS_HOST', 'localhost'),
+                        port=int(os.getenv('REDIS_PORT', 6379)),
+                        db=int(os.getenv('REDIS_DB', 0))
+                    )
             else:
-                # Si la variable apunta a otro servicio (ej. postgresql), ignorarla
-                print(f"⚠️ La variable REDIS_URL parece usar el esquema '{parsed.scheme}://' no válido para Redis.")
-                print("   Posible causa: Render proporcionó una URL de otra base de datos (ej. PostgreSQL).")
-                print("   Usando REDIS_HOST/REDIS_PORT como fallback (localhost:6379 si no está configurado).")
                 bot_state.redis_store = RedisStore(
                     host=os.getenv('REDIS_HOST', 'localhost'),
                     port=int(os.getenv('REDIS_PORT', 6379)),
                     db=int(os.getenv('REDIS_DB', 0))
                 )
-        else:
-            bot_state.redis_store = RedisStore(
-                host=os.getenv('REDIS_HOST', 'localhost'),
-                port=int(os.getenv('REDIS_PORT', 6379)),
-                db=int(os.getenv('REDIS_DB', 0))
-            )
-            print("🔗 Usando REDIS_HOST/PORT")
-        
-        await bot_state.redis_store.connect()
-        print("✅ Redis conectado")
+                print("🔗 Intentando Redis en localhost:6379")
+            
+            await bot_state.redis_store.connect()
+            redis_connected = True
+            print("✅ Redis conectado")
+            
+        except Exception as redis_error:
+            print(f"⚠️ Redis no disponible: {redis_error}")
+            print("⚠️ El bot continuará SIN PERSISTENCIA (memoria volátil)")
+            print("   → Los datos se perderán al reiniciar el servicio")
+            print("   → Para persistencia, configura Redis externo (Upstash gratis)")
+            bot_state.redis_store = None
         
         # Inicializar adaptador de datos (Exchange directo - SIN CoinGlass)
         exchange_name = os.getenv('EXCHANGE_NAME', 'binance')

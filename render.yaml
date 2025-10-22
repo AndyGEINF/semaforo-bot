@@ -8,10 +8,14 @@ services:
     buildCommand: "pip install -r requirements.txt && python -m playwright install chromium && chmod +x start_main.sh"
     startCommand: "./start_main.sh"
     envVars:
-      - key: REDIS_URL
-        fromDatabase:
-          name: semaforo-redis
-          property: connectionString
+      # IMPORTANTE: Redis debe configurarse manualmente en Render Dashboard
+      # Opción 1: Crear Redis desde Dashboard y pegar REDIS_URL aquí
+      # Opción 2: Usar Redis externo (Upstash gratis: https://upstash.com)
+      # Opción 3: Dejar en blanco y el bot usará memoria local (se pierde al reiniciar)
+      - key: REDIS_HOST
+        value: "localhost"
+      - key: REDIS_PORT
+        value: "6379"
       - key: PYTHON_VERSION
         value: "3.11.0"
       - key: EXCHANGE_NAME
@@ -43,9 +47,3 @@ services:
       - type: rewrite
         source: /*
         destination: /index_pro.html
-
-databases:
-  # Redis para memoria del bot
-  - name: semaforo-redis
-    plan: free
-    region: oregon
