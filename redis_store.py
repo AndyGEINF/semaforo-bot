@@ -52,6 +52,11 @@ class RedisStore:
         try:
             # Si hay URL, usarla (para Render, Railway, etc.)
             if self.url:
+                # Validar esquema de la URL
+                parsed = urlparse(self.url)
+                if parsed.scheme not in ("redis", "rediss", "unix"):
+                    raise ValueError("Redis URL must specify one of the following schemes (redis://, rediss://, unix://)")
+
                 self.client = await redis.from_url(
                     self.url,
                     decode_responses=True,

@@ -101,8 +101,22 @@ async def startup_event():
         # Prioridad: REDIS_URL (Render/Railway) > REDIS_HOST/PORT (local)
         redis_url = os.getenv('REDIS_URL')
         if redis_url:
-            bot_state.redis_store = RedisStore(url=redis_url)
-            print("🔗 Usando REDIS_URL de entorno")
+            # Validar esquema: redis://, rediss:// o unix://
+            from urllib.parse import urlparse
+            parsed = urlparse(redis_url)
+            if parsed.scheme in ("redis", "rediss", "unix"):
+                bot_state.redis_store = RedisStore(url=redis_url)
+                print("🔗 Usando REDIS_URL de entorno")
+            else:
+                # Si la variable apunta a otro servicio (ej. postgresql), ignorarla
+                print(f"⚠️ La variable REDIS_URL parece usar el esquema '{parsed.scheme}://' no válido para Redis.")
+                print("   Posible causa: Render proporcionó una URL de otra base de datos (ej. PostgreSQL).")
+                print("   Usando REDIS_HOST/REDIS_PORT como fallback (localhost:6379 si no está configurado).")
+                bot_state.redis_store = RedisStore(
+                    host=os.getenv('REDIS_HOST', 'localhost'),
+                    port=int(os.getenv('REDIS_PORT', 6379)),
+                    db=int(os.getenv('REDIS_DB', 0))
+                )
         else:
             bot_state.redis_store = RedisStore(
                 host=os.getenv('REDIS_HOST', 'localhost'),
