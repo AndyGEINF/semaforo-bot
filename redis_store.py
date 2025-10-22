@@ -11,16 +11,20 @@ Operaciones soportadas:
 import asyncio
 from typing import Optional, Any, Set
 import json
+import os
 import redis.asyncio as redis
+from urllib.parse import urlparse
 
 
 class RedisStore:
     """
     Wrapper para operaciones con Redis de forma asíncrona
+    Soporta conexión via URL (ej: redis://user:pass@host:port) o parámetros individuales
     """
     
     def __init__(
         self,
+        url: Optional[str] = None,
         host: str = 'localhost',
         port: int = 6379,
         db: int = 0,
@@ -30,11 +34,13 @@ class RedisStore:
         Inicializa la conexión a Redis
         
         Args:
-            host: Host de Redis
-            port: Puerto de Redis
+            url: URL completa de Redis (ej: redis://localhost:6379) - Prioridad sobre host/port
+            host: Host de Redis (usado si url=None)
+            port: Puerto de Redis (usado si url=None)
             db: Número de base de datos
             password: Contraseña (opcional)
         """
+        self.url = url
         self.host = host
         self.port = port
         self.db = db
@@ -44,24 +50,37 @@ class RedisStore:
     async def connect(self) -> None:
         """Establece conexión con Redis"""
         try:
-            self.client = await redis.Redis(
-                host=self.host,
-                port=self.port,
-                db=self.db,
-                password=self.password,
-                decode_responses=True,
-                socket_connect_timeout=5
-            )
+            # Si hay URL, usarla (para Render, Railway, etc.)
+            if self.url:
+                self.client = await redis.from_url(
+                    self.url,
+                    decode_responses=True,
+                    socket_connect_timeout=5
+                )
+                print(f"✅ Conectado a Redis via URL")
+            else:
+                # Conexión tradicional con host/port
+                self.client = await redis.Redis(
+                    host=self.host,
+                    port=self.port,
+                    db=self.db,
+                    password=self.password,
+                    decode_responses=True,
+                    socket_connect_timeout=5
+                )
+                print(f"✅ Conectado a Redis en {self.host}:{self.port}")
             
             # Verificar conexión
             await self.client.ping()
-            print(f"✅ Conectado a Redis en {self.host}:{self.port}")
             
         except Exception as e:
             print(f"❌ Error conectando a Redis: {e}")
-            print(f"⚠️ NOTA: Asegúrate de que Redis esté corriendo en {self.host}:{self.port}")
-            print(f"   Puedes instalar Redis con: sudo apt install redis-server (Linux)")
-            print(f"   O descargar desde: https://redis.io/download")
+            if self.url:
+                print(f"⚠️ URL de Redis: {self.url[:20]}...") # Mostrar solo inicio por seguridad
+            else:
+                print(f"⚠️ NOTA: Asegúrate de que Redis esté corriendo en {self.host}:{self.port}")
+                print(f"   Puedes instalar Redis con: sudo apt install redis-server (Linux)")
+                print(f"   O descargar desde: https://redis.io/download")
             raise
     
     async def disconnect(self) -> None:

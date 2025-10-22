@@ -98,11 +98,19 @@ async def startup_event():
     
     try:
         # Inicializar Redis Store
-        bot_state.redis_store = RedisStore(
-            host=os.getenv('REDIS_HOST', 'localhost'),
-            port=int(os.getenv('REDIS_PORT', 6379)),
-            db=int(os.getenv('REDIS_DB', 0))
-        )
+        # Prioridad: REDIS_URL (Render/Railway) > REDIS_HOST/PORT (local)
+        redis_url = os.getenv('REDIS_URL')
+        if redis_url:
+            bot_state.redis_store = RedisStore(url=redis_url)
+            print("🔗 Usando REDIS_URL de entorno")
+        else:
+            bot_state.redis_store = RedisStore(
+                host=os.getenv('REDIS_HOST', 'localhost'),
+                port=int(os.getenv('REDIS_PORT', 6379)),
+                db=int(os.getenv('REDIS_DB', 0))
+            )
+            print("🔗 Usando REDIS_HOST/PORT")
+        
         await bot_state.redis_store.connect()
         print("✅ Redis conectado")
         
