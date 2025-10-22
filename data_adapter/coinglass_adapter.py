@@ -225,13 +225,25 @@ class CoinGlassAdapter:
             try:
                 from playwright.async_api import async_playwright
                 import re
+                import os
                 
                 print(f"🎯 Scraping CoinGlass {interval} para {asset}...")
+                
+                # Args para Chromium sin dependencias del sistema (Render compatible)
+                chromium_args = [
+                    '--disable-blink-features=AutomationControlled',
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-gpu',
+                    '--disable-software-rasterizer',
+                    '--disable-extensions'
+                ]
                 
                 async with async_playwright() as p:
                     browser = await p.chromium.launch(
                         headless=True,
-                        args=['--disable-blink-features=AutomationControlled']
+                        args=chromium_args
                     )
                     
                     context = await browser.new_context(

@@ -5,8 +5,8 @@ services:
     runtime: python
     region: oregon
     plan: free
-    buildCommand: "pip install -r requirements.txt && python -m playwright install --with-deps chromium"
-    startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT"
+    buildCommand: "pip install -r requirements.txt && python -m playwright install chromium && chmod +x start_main.sh"
+    startCommand: "./start_main.sh"
     envVars:
       - key: REDIS_URL
         fromDatabase:
@@ -26,8 +26,8 @@ services:
     runtime: python
     region: oregon
     plan: free
-    buildCommand: "pip install -r requirements.txt && python -m playwright install --with-deps chromium"
-    startCommand: "uvicorn api_longshort_ondemand:app --host 0.0.0.0 --port $PORT"
+    buildCommand: "pip install -r requirements.txt && python -m playwright install chromium && chmod +x start_longshort.sh"
+    startCommand: "./start_longshort.sh"
     envVars:
       - key: PYTHON_VERSION
         value: "3.11.0"
