@@ -15,6 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import asyncio
+import json
 from datetime import datetime
 from typing import Dict, Set
 import uvicorn
@@ -122,7 +123,7 @@ async def stream_longshort(symbol: str):
                 "timestamp": datetime.now().isoformat()
             }
             yield f"event: connected\n"
-            yield f"data: {init_event}\n\n"
+            yield f"data: {json.dumps(init_event)}\n\n"
             print(f"🟢 Conexión establecida para {symbol}")
             
             while True:
@@ -134,7 +135,7 @@ async def stream_longshort(symbol: str):
                         "timestamp": datetime.now().isoformat()
                     }
                     yield f"event: loading\n"
-                    yield f"data: {loading_event}\n\n"
+                    yield f"data: {json.dumps(loading_event)}\n\n"
                     
                     # 🔥 SCRAPING con TIMEOUT de 30 segundos (aumentado para Render)
                     print(f"🔄 [{datetime.now().strftime('%H:%M:%S')}] Scraping {symbol}...")
@@ -153,7 +154,7 @@ async def stream_longshort(symbol: str):
                             "timestamp": datetime.now().isoformat()
                         }
                         yield f"event: error\n"
-                        yield f"data: {error_event}\n\n"
+                        yield f"data: {json.dumps(error_event)}\n\n"
                         await asyncio.sleep(5)  # Esperar más antes de reintentar
                         continue
                     except Exception as scrape_error:
@@ -164,7 +165,7 @@ async def stream_longshort(symbol: str):
                             "timestamp": datetime.now().isoformat()
                         }
                         yield f"event: error\n"
-                        yield f"data: {error_event}\n\n"
+                        yield f"data: {json.dumps(error_event)}\n\n"
                         await asyncio.sleep(5)
                         continue
                     
@@ -192,7 +193,7 @@ async def stream_longshort(symbol: str):
                             "timestamp": datetime.now().isoformat()
                         }
                         yield f"event: error\n"
-                        yield f"data: {error_event}\n\n"
+                        yield f"data: {json.dumps(error_event)}\n\n"
                         print(f"❌ Error al scrapear {symbol}")
                     
                     # Esperar 2 segundos antes del próximo scraping
