@@ -114,17 +114,48 @@ async def stream_longshort(symbol: str):
     
     async def event_generator():
         try:
+            # Enviar evento inicial de conexión
+            init_event = {
+                "symbol": symbol,
+                "status": "connected",
+                "message": "Iniciando scraping...",
+                "timestamp": datetime.now().isoformat()
+            }
+            yield f"event: connected\n"
+            yield f"data: {init_event}\n\n"
+            print(f"🟢 Conexión establecida para {symbol}")
+            
             while True:
                 try:
-                    # Enviar un ping inmediato para mantener la conexión activa
-                    ping = {"timestamp": datetime.now().isoformat(), "type": "ping"}
-                    yield f"event: ping\n"
-                    yield f"data: {ping}\n\n"
-
-                    # 🔥 SCRAPING REAL cada iteración (cada 2 segundos)
+                    # Enviar evento de scraping en progreso
+                    loading_event = {
+                        "symbol": symbol,
+                        "status": "scraping",
+                        "timestamp": datetime.now().isoformat()
+                    }
+                    yield f"event: loading\n"
+                    yield f"data: {loading_event}\n\n"
+                    
+                    # 🔥 SCRAPING con TIMEOUT de 15 segundos
                     print(f"🔄 [{datetime.now().strftime('%H:%M:%S')}] Scraping {symbol}...")
-
-                    data = await get_coinglass_exact(symbol, interval="5m")
+                    
+                    try:
+                        # Timeout de 15 segundos para el scraping
+                        data = await asyncio.wait_for(
+                            get_coinglass_exact(symbol, interval="5m"),
+                            timeout=15.0
+                        )
+                    except asyncio.TimeoutError:
+                        print(f"⏱️ Timeout al scrapear {symbol} (15s)")
+                        error_event = {
+                            "symbol": symbol,
+                            "error": "Timeout scraping CoinGlass (15s)",
+                            "timestamp": datetime.now().isoformat()
+                        }
+                        yield f"event: error\n"
+                        yield f"data: {error_event}\n\n"
+                        await asyncio.sleep(5)  # Esperar más antes de reintentar
+                        continue
                     
                     if data:
                         # Crear evento SSE

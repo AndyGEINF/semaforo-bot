@@ -1008,7 +1008,27 @@
             // Endpoint de CoinGlass con actualización cada 2 segundos
             longShortStream = new EventSource(`http://localhost:8001/longshort/stream/${symbol}`);
             
-            // Escuchar evento "update" (no el evento por defecto)
+            // Evento: Conexión establecida
+            longShortStream.addEventListener('connected', (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log(`✅ ${data.message} (${data.symbol})`);
+                } catch (error) {
+                    console.error('❌ Error parseando evento connected:', error);
+                }
+            });
+            
+            // Evento: Scraping en progreso
+            longShortStream.addEventListener('loading', (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log(`⏳ Scraping ${data.symbol}...`);
+                } catch (error) {
+                    console.error('❌ Error parseando evento loading:', error);
+                }
+            });
+            
+            // Escuchar evento "update" (datos exitosos)
             longShortStream.addEventListener('update', (event) => {
                 try {
                     const data = JSON.parse(event.data);
