@@ -116,9 +116,14 @@ async def stream_longshort(symbol: str):
         try:
             while True:
                 try:
+                    # Enviar un ping inmediato para mantener la conexión activa
+                    ping = {"timestamp": datetime.now().isoformat(), "type": "ping"}
+                    yield f"event: ping\n"
+                    yield f"data: {ping}\n\n"
+
                     # 🔥 SCRAPING REAL cada iteración (cada 2 segundos)
                     print(f"🔄 [{datetime.now().strftime('%H:%M:%S')}] Scraping {symbol}...")
-                    
+
                     data = await get_coinglass_exact(symbol, interval="5m")
                     
                     if data:
