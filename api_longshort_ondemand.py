@@ -137,25 +137,25 @@ async def stream_longshort(symbol: str):
                     yield f"event: loading\n"
                     yield f"data: {json.dumps(loading_event)}\n\n"
                     
-                    # 🔥 SCRAPING con TIMEOUT de 30 segundos (aumentado para Render)
+                    # 🔥 SCRAPING con TIMEOUT de 60 segundos (Render free tier es LENTO)
                     print(f"🔄 [{datetime.now().strftime('%H:%M:%S')}] Scraping {symbol}...")
                     
                     try:
-                        # Timeout de 30 segundos para el scraping (Render puede ser más lento)
+                        # Timeout de 60 segundos para el scraping (Render CPU limitada + Chromium + navegación)
                         data = await asyncio.wait_for(
                             get_coinglass_exact(symbol, interval="5m"),
-                            timeout=30.0
+                            timeout=60.0
                         )
                     except asyncio.TimeoutError:
-                        print(f"⏱️ Timeout al scrapear {symbol} (30s)")
+                        print(f"⏱️ Timeout al scrapear {symbol} (60s) - Render free tier demasiado lento")
                         error_event = {
                             "symbol": symbol,
-                            "error": "Timeout scraping CoinGlass (30s) - Render network/CPU may be slow",
+                            "error": "Timeout scraping CoinGlass (60s) - Render free tier CPU muy limitada, considera plan pago",
                             "timestamp": datetime.now().isoformat()
                         }
                         yield f"event: error\n"
                         yield f"data: {json.dumps(error_event)}\n\n"
-                        await asyncio.sleep(5)  # Esperar más antes de reintentar
+                        await asyncio.sleep(10)  # Esperar más antes de reintentar (10s)
                         continue
                     except Exception as scrape_error:
                         print(f"❌ Error de scraping para {symbol}: {scrape_error}")

@@ -67,23 +67,23 @@ async def get_coinglass_exact(symbol: str = "BTC", interval: str = "5m") -> dict
                 await browser.close()
                 return None
             
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.5)  # Reducido de 1s a 0.5s
             
-            # Cerrar popup de cookies
+            # Cerrar popup de cookies (RÁPIDO)
             try:
                 for selector in ['button.fc-cta-consent', 'button:has-text("Consent")']:
                     btn = page.locator(selector).first
                     if await btn.count() > 0:
-                        await btn.click(timeout=2000)
+                        await btn.click(timeout=1500)  # Reducido timeout
                         print(f"   ✅ Popup cerrado")
-                        await asyncio.sleep(0.5)
+                        await asyncio.sleep(0.3)  # Reducido de 0.5s
                         break
             except:
                 pass
             
-            # Esperar overlay
+            # Esperar overlay (reducir timeout)
             try:
-                await page.wait_for_selector('div.fc-dialog-overlay', state='detached', timeout=3000)
+                await page.wait_for_selector('div.fc-dialog-overlay', state='detached', timeout=2000)  # Reducido de 3s
             except:
                 pass
             
@@ -109,7 +109,7 @@ async def get_coinglass_exact(symbol: str = "BTC", interval: str = "5m") -> dict
                         
                         # Hacer clic en el dropdown de monedas
                         await coin_dropdown.click()
-                        await asyncio.sleep(1)
+                        await asyncio.sleep(0.7)  # Reducido de 1s
                         
                         # Buscar la opción con el símbolo correcto
                         # Intentar varios selectores posibles
@@ -122,10 +122,10 @@ async def get_coinglass_exact(symbol: str = "BTC", interval: str = "5m") -> dict
                             try:
                                 option = page.locator(selector).first
                                 if await option.count() > 0:
-                                    await option.click(timeout=2000)
+                                    await option.click(timeout=1500)  # Reducido timeout
                                     print(f"   ✅ {symbol} seleccionado")
                                     option_found = True
-                                    await asyncio.sleep(2)  # Esperar que cargue la nueva moneda
+                                    await asyncio.sleep(1.5)  # Reducido de 2s - esperar que cargue
                                     break
                             except:
                                 continue
@@ -134,9 +134,9 @@ async def get_coinglass_exact(symbol: str = "BTC", interval: str = "5m") -> dict
                             print(f"   ⚠️ No se pudo hacer clic en {symbol}, intentando con teclado...")
                             # Fallback: usar teclado para buscar
                             await page.keyboard.type(symbol)
-                            await asyncio.sleep(0.5)
+                            await asyncio.sleep(0.3)  # Reducido de 0.5s
                             await page.keyboard.press('Enter')
-                            await asyncio.sleep(2)
+                            await asyncio.sleep(1.5)  # Reducido de 2s
                     else:
                         print(f"   ✅ Ya está en {symbol}")
                 else:
@@ -163,14 +163,14 @@ async def get_coinglass_exact(symbol: str = "BTC", interval: str = "5m") -> dict
                     if "5 minute" not in current_interval and "5 min" not in current_interval:
                         print(f"   🔄 Cambiando a 5min...")
                         await last_dropdown.click(force=True)
-                        await asyncio.sleep(1)
+                        await asyncio.sleep(0.7)  # Reducido de 1s
                         
                         for _ in range(4):
                             await page.keyboard.press('ArrowUp')
-                            await asyncio.sleep(0.2)
+                            await asyncio.sleep(0.15)  # Reducido de 0.2s
                         
                         await page.keyboard.press('Enter')
-                        await asyncio.sleep(3)
+                        await asyncio.sleep(2)  # Reducido de 3s - esperar carga de gráfico
                         
                         new_interval = await last_dropdown.text_content()
                         print(f"   ✅ Nuevo intervalo: '{new_interval.strip()}'")
@@ -181,13 +181,51 @@ async def get_coinglass_exact(symbol: str = "BTC", interval: str = "5m") -> dict
             
             # Extraer datos
             print(f"   🔍 Buscando datos de Long/Short...")
-            first_div = page.locator('div.cg-style-i4e4a6').first
+            
+            # Intentar múltiples selectores (las clases de CoinGlass pueden cambiar)
+            selectors = [
+                'div.cg-style-i4e4a6',  # Selector principal
+                'div[class*="cg-style-"]',  # Cualquier clase que empiece con cg-style-
+                'div.MuiBox-root',  # Contenedor común en CoinGlass
+                'div[class*="percent"]',  # Divs que contengan "percent" en clase
+            ]
+            
+            text = None
+            used_selector = None
+            
+            for selector in selectors:
+                try:
+                    first_div = page.locator(selector).first
+                    count = await first_div.count()
+                    
+                    if count > 0:
+                        text = await first_div.text_content(timeout=3000)
+                        if text and '%' in text:
+                            text = text.strip()
+                            used_selector = selector
+                            print(f"   ✅ Datos encontrados con selector: {selector}")
+                            print(f"   📝 Texto extraído: '{text}'")
+                            break
+                        else:
+                            print(f"   ⚠️ Selector {selector} encontrado pero sin '%': '{text}'")
+                    else:
+                        print(f"   ⚠️ Selector {selector} no encontró elementos")
+                except Exception as e:
+                    print(f"   ⚠️ Error con selector {selector}: {e}")
+                    continue
+            
+            if not text or '%' not in text:
+                print(f"   ❌ No se pudo extraer texto con ningún selector")
+                print(f"   🔍 HTML de la página (primeros 500 chars):")
+                try:
+                    html = await page.content()
+                    print(f"   {html[:500]}")
+                except:
+                    pass
+                await browser.close()
+                return None
             
             try:
-                text = await first_div.text_content(timeout=5000)
-                text = text.strip()
-                print(f"   📝 Texto extraído: '{text}'")
-                
                 match = re.search(r'(\d+\.?\d*)\s*%', text)
                 if match:
                     longs_pct = float(match.group(1))
@@ -208,15 +246,29 @@ async def get_coinglass_exact(symbol: str = "BTC", interval: str = "5m") -> dict
                         'timestamp': datetime.now().isoformat()
                     }
                 else:
-                    print(f"   ❌ No se encontró porcentaje en el texto")
+                    print(f"   ❌ No se encontró porcentaje en el texto: '{text}'")
+                    # Tomar screenshot para debugging
+                    try:
+                        screenshot_path = f"/tmp/coinglass_error_{symbol}.png"
+                        await page.screenshot(path=screenshot_path)
+                        print(f"   📸 Screenshot guardado en: {screenshot_path}")
+                    except:
+                        pass
             except Exception as e:
-                print(f"   ❌ Error extrayendo datos: {e}")
+                print(f"   ❌ Error parseando datos: {e}")
             
             await browser.close()
             return None
             
         except Exception as e:
             print(f"   ❌ Error general: {e}")
+            # Intentar capturar HTML para debugging
+            try:
+                html = await page.content()
+                print(f"   🔍 HTML capturado (primeros 1000 chars):")
+                print(f"   {html[:1000]}")
+            except:
+                pass
             await browser.close()
             return None
 
