@@ -96,6 +96,14 @@ async def startup_event():
     """Inicializa todos los componentes del bot al arrancar"""
     print("🚀 Iniciando SemáforoBot...")
     
+    # Inicializar componentes en background para no bloquear el health check
+    asyncio.create_task(initialize_components())
+    
+    print("✅ Servidor iniciado (componentes cargando en background...)")
+
+
+async def initialize_components():
+    """Inicializa componentes en background sin bloquear el startup"""
     try:
         # Inicializar Redis Store (opcional - modo degradado sin Redis)
         # Prioridad: REDIS_URL (Render/Railway) > REDIS_HOST/PORT (local) > Sin Redis
@@ -210,12 +218,11 @@ async def startup_event():
         except Exception as e:
             print(f"⚠️ No se pudieron cargar trades: {e}")
         
-        print("🎯 SemáforoBot iniciado (algunos componentes pueden no estar disponibles)")
+        print("🎯 SemáforoBot componentes inicializados (algunos pueden no estar disponibles)")
         
     except Exception as e:
-        print(f"❌ Error crítico al iniciar: {e}")
+        print(f"❌ Error en inicialización de componentes: {e}")
         print("⚠️ El servidor continuará pero con funcionalidad muy limitada")
-        # NO hacer raise - dejar que el servidor arranque
 
 
 @app.on_event("shutdown")
