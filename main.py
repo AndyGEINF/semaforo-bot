@@ -9,19 +9,36 @@ Comandos disponibles:
 - configurar stoploss [%] tp [%]: Ajusta parámetros de riesgo
 """
 
+# 🔥 LOGGING TEMPRANO para debugging en Render
+print("=" * 60)
+print("🚀 MAIN.PY - Iniciando carga del módulo...")
+print("=" * 60)
+
 import os
+print("✅ os importado")
 import json
+print("✅ json importado")
 import asyncio
+print("✅ asyncio importado")
 from typing import Dict, Optional, Any
+print("✅ typing importado")
 from datetime import datetime
+print("✅ datetime importado")
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks
+print("✅ FastAPI importado")
 from fastapi.responses import JSONResponse, FileResponse
+print("✅ FastAPI responses importado")
 from fastapi.staticfiles import StaticFiles
+print("✅ StaticFiles importado")
 from fastapi.middleware.cors import CORSMiddleware
+print("✅ CORS importado")
 from pydantic import BaseModel, Field
+print("✅ Pydantic importado")
 from dotenv import load_dotenv
+print("✅ dotenv importado")
 import uvicorn
+print("✅ uvicorn importado")
 
 # ⚡ IMPORTACIONES PESADAS MOVIDAS A initialize_components()
 # Esto permite que el servidor inicie inmediatamente para responder al health check
@@ -29,19 +46,34 @@ import uvicorn
 
 # Cargar variables de entorno
 load_dotenv()
+print("✅ Variables de entorno cargadas")
 
 # Cargar configuración
-with open('config.json', 'r', encoding='utf-8') as f:
-    CONFIG = json.load(f)
+print("📄 Cargando config.json...")
+try:
+    with open('config.json', 'r', encoding='utf-8') as f:
+        CONFIG = json.load(f)
+    print(f"✅ config.json cargado (version: {CONFIG.get('version', 'unknown')})")
+except Exception as e:
+    print(f"❌ ERROR cargando config.json: {e}")
+    # Usar config por defecto
+    CONFIG = {
+        "version": "1.0.0",
+        "risk": {"default_stoploss": 2.0, "default_takeprofit": 6.0}
+    }
+    print("⚠️ Usando configuración por defecto")
 
 # Inicializar FastAPI
+print("🔧 Inicializando FastAPI...")
 app = FastAPI(
     title="SemáforoBot API",
     description="Bot de trading con análisis de riesgo automatizado",
     version=CONFIG['version']
 )
+print("✅ FastAPI inicializado")
 
 # Configurar CORS para permitir acceso desde el frontend
+print("🔧 Configurando CORS...")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -49,11 +81,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+print("✅ CORS configurado")
 
 # Montar directorio estático
-app.mount("/static", StaticFiles(directory="static"), name="static")
+print("🔧 Montando directorio static/...")
+try:
+    app.mount("/static", StaticFiles(directory="static"), name="static")
+    print("✅ Directorio static/ montado")
+except Exception as e:
+    print(f"⚠️ Error montando static/: {e}")
 
 # Estado global del bot
+print("🔧 Inicializando BotState...")
 class BotState:
     """Estado global del bot"""
     def __init__(self):
@@ -66,7 +105,10 @@ class BotState:
         self.pending_trade: Optional[Dict] = None
         self.active_trades: Dict[str, Dict] = {}
 
+print("✅ BotState definido")
+
 bot_state = BotState()
+print("✅ bot_state inicializado")
 
 
 # Modelos de datos para API
