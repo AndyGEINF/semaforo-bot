@@ -254,25 +254,20 @@ async def favicon():
 @app.get("/status")
 async def health_check():
     """
-    Health check endpoint para Render y otros servicios
-    Siempre retorna 200 si el servidor está vivo
+    Health check endpoint para Render - SIEMPRE retorna 200
+    No depende de ningún componente para responder rápido
     """
-    components_status = {
-        "redis": bot_state.redis_store is not None,
-        "exchange": bot_state.data_adapter is not None,
-        "risk_analyzer": bot_state.risk_analyzer is not None,
-        "entry_optimizer": bot_state.entry_optimizer is not None,
-        "memory_manager": bot_state.memory_manager is not None
-    }
-    
     return {
         "status": "ok",
-        "timestamp": datetime.now().isoformat(),
-        "components": components_status,
-        "healthy_components": sum(components_status.values()),
-        "total_components": len(components_status)
+        "service": "semaforo-bot-main",
+        "timestamp": datetime.now().isoformat()
     }
 
+
+# ===================================================================
+# ===================================================================
+# ENDPOINTS DE ANÁLISIS
+# ===================================================================
 
 @app.get("/api/info")
 async def api_info():
