@@ -139,45 +139,63 @@ async def startup_event():
             bot_state.redis_store = None
         
         # Inicializar adaptador de datos (Exchange directo - SIN CoinGlass)
-        exchange_name = os.getenv('EXCHANGE_NAME', 'binance')
-        bot_state.data_adapter = ExchangeAdapter(
-            exchange_name=exchange_name,
-            api_key=os.getenv('EXCHANGE_API_KEY'),  # Opcional
-            api_secret=os.getenv('EXCHANGE_API_SECRET')  # Opcional
-        )
-        await bot_state.data_adapter.initialize()
-        print(f"✅ Exchange adapter inicializado ({exchange_name})")
+        try:
+            exchange_name = os.getenv('EXCHANGE_NAME', 'binance')
+            bot_state.data_adapter = ExchangeAdapter(
+                exchange_name=exchange_name,
+                api_key=os.getenv('EXCHANGE_API_KEY'),  # Opcional
+                api_secret=os.getenv('EXCHANGE_API_SECRET')  # Opcional
+            )
+            await bot_state.data_adapter.initialize()
+            print(f"✅ Exchange adapter inicializado ({exchange_name})")
+        except Exception as e:
+            print(f"⚠️ Exchange adapter falló: {e}")
+            print("   El bot continuará con funcionalidad limitada")
         
         # Inicializar analizador de riesgo
-        bot_state.risk_analyzer = RiskAnalyzer(
-            config=CONFIG,
-            data_adapter=bot_state.data_adapter
-        )
-        print("✅ Risk analyzer listo")
+        try:
+            bot_state.risk_analyzer = RiskAnalyzer(
+                config=CONFIG,
+                data_adapter=bot_state.data_adapter
+            )
+            print("✅ Risk analyzer listo")
+        except Exception as e:
+            print(f"⚠️ Risk analyzer falló: {e}")
         
         # Inicializar optimizador de entradas
-        bot_state.entry_optimizer = EntryOptimizer(
-            config=CONFIG,
-            data_adapter=bot_state.data_adapter
-        )
-        print("✅ Entry optimizer listo")
+        try:
+            bot_state.entry_optimizer = EntryOptimizer(
+                config=CONFIG,
+                data_adapter=bot_state.data_adapter
+            )
+            print("✅ Entry optimizer listo")
+        except Exception as e:
+            print(f"⚠️ Entry optimizer falló: {e}")
         
         # Inicializar gestor de memoria
-        bot_state.memory_manager = MemoryManager(
-            redis_store=bot_state.redis_store,
-            config=CONFIG
-        )
-        print("✅ Memory manager listo")
+        try:
+            bot_state.memory_manager = MemoryManager(
+                redis_store=bot_state.redis_store,
+                config=CONFIG
+            )
+            print("✅ Memory manager listo")
+        except Exception as e:
+            print(f"⚠️ Memory manager falló: {e}")
         
         # Cargar trades activos desde memoria
-        bot_state.active_trades = await bot_state.memory_manager.load_active_trades()
-        print(f"✅ Trades activos cargados: {len(bot_state.active_trades)}")
+        try:
+            if bot_state.memory_manager:
+                bot_state.active_trades = await bot_state.memory_manager.load_active_trades()
+                print(f"✅ Trades activos cargados: {len(bot_state.active_trades)}")
+        except Exception as e:
+            print(f"⚠️ No se pudieron cargar trades: {e}")
         
-        print("🎯 SemáforoBot iniciado correctamente!")
+        print("🎯 SemáforoBot iniciado (algunos componentes pueden no estar disponibles)")
         
     except Exception as e:
-        print(f"❌ Error al iniciar: {e}")
-        raise
+        print(f"❌ Error crítico al iniciar: {e}")
+        print("⚠️ El servidor continuará pero con funcionalidad muy limitada")
+        # NO hacer raise - dejar que el servidor arranque
 
 
 @app.on_event("shutdown")
@@ -204,6 +222,29 @@ async def root():
 async def favicon():
     """Sirve el favicon desde la carpeta static"""
     return FileResponse("static/favicon.png")
+
+
+@app.get("/status")
+async def health_check():
+    """
+    Health check endpoint para Render y otros servicios
+    Siempre retorna 200 si el servidor está vivo
+    """
+    components_status = {
+        "redis": bot_state.redis_store is not None,
+        "exchange": bot_state.data_adapter is not None,
+        "risk_analyzer": bot_state.risk_analyzer is not None,
+        "entry_optimizer": bot_state.entry_optimizer is not None,
+        "memory_manager": bot_state.memory_manager is not None
+    }
+    
+    return {
+        "status": "ok",
+        "timestamp": datetime.now().isoformat(),
+        "components": components_status,
+        "healthy_components": sum(components_status.values()),
+        "total_components": len(components_status)
+    }
 
 
 @app.get("/api/info")
