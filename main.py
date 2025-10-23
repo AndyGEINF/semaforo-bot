@@ -139,17 +139,37 @@ async def startup_event():
             bot_state.redis_store = None
         
         # Inicializar adaptador de datos (Exchange directo - SIN CoinGlass)
+        # Lista de exchanges alternativos si Binance falla (451 en Render)
+        exchange_fallbacks = ['binance', 'bybit', 'okx', 'kraken']
+        exchange_initialized = False
+        
         try:
-            exchange_name = os.getenv('EXCHANGE_NAME', 'binance')
-            bot_state.data_adapter = ExchangeAdapter(
-                exchange_name=exchange_name,
-                api_key=os.getenv('EXCHANGE_API_KEY'),  # Opcional
-                api_secret=os.getenv('EXCHANGE_API_SECRET')  # Opcional
-            )
-            await bot_state.data_adapter.initialize()
-            print(f"✅ Exchange adapter inicializado ({exchange_name})")
+            primary_exchange = os.getenv('EXCHANGE_NAME', 'binance')
+            
+            # Intentar con el exchange configurado primero
+            for exchange_name in [primary_exchange] + [e for e in exchange_fallbacks if e != primary_exchange]:
+                try:
+                    print(f"🔄 Intentando conectar a {exchange_name}...")
+                    bot_state.data_adapter = ExchangeAdapter(
+                        exchange_name=exchange_name,
+                        api_key=os.getenv('EXCHANGE_API_KEY'),  # Opcional
+                        api_secret=os.getenv('EXCHANGE_API_SECRET')  # Opcional
+                    )
+                    await bot_state.data_adapter.initialize()
+                    print(f"✅ Exchange adapter inicializado ({exchange_name})")
+                    exchange_initialized = True
+                    break
+                except Exception as ex:
+                    print(f"⚠️ {exchange_name} falló: {ex}")
+                    if "451" in str(ex) or "restricted location" in str(ex).lower():
+                        print(f"   → {exchange_name} bloqueado por ubicación, probando alternativa...")
+                    continue
+            
+            if not exchange_initialized:
+                print("❌ Ningún exchange disponible")
+                print("   El bot continuará con funcionalidad limitada")
         except Exception as e:
-            print(f"⚠️ Exchange adapter falló: {e}")
+            print(f"⚠️ Error inicializando exchanges: {e}")
             print("   El bot continuará con funcionalidad limitada")
         
         # Inicializar analizador de riesgo

@@ -1002,11 +1002,19 @@
         }
         
         function createNewStream(symbol) {
+            // Detectar entorno (localhost vs producción en Render)
+            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const sseBaseUrl = isLocalhost 
+                ? 'http://localhost:8001' 
+                : 'https://semaforo-bot-longshort.onrender.com';
+            const sseUrl = `${sseBaseUrl}/longshort/stream/${symbol}`;
+            
             console.log(`🔗 Conectando a CoinGlass stream para ${symbol} (actualización cada 2s)...`);
-            console.log(`   URL: http://localhost:8001/longshort/stream/${symbol}`);
+            console.log(`   URL: ${sseUrl}`);
+            console.log(`   Entorno: ${isLocalhost ? 'LOCAL' : 'PRODUCCIÓN (Render)'}`);
             
             // Endpoint de CoinGlass con actualización cada 2 segundos
-            longShortStream = new EventSource(`http://localhost:8001/longshort/stream/${symbol}`);
+            longShortStream = new EventSource(sseUrl);
             
             // Evento: Conexión establecida
             longShortStream.addEventListener('connected', (event) => {
