@@ -19,20 +19,30 @@ echo "🔍 [$(date +%H:%M:%S)] Verificando Chromium..."
 
 # Verificar si el ejecutable de Chromium existe
 CHROMIUM_PATH="$PLAYWRIGHT_BROWSERS_PATH/chromium-*/chrome-linux/headless_shell"
-if ls $CHROMIUM_PATH 1> /dev/null 2>&1; then
+if compgen -G "$CHROMIUM_PATH" > /dev/null; then
     echo "✅ [$(date +%H:%M:%S)] Chromium ya está instalado"
+    ls -lh $CHROMIUM_PATH | head -1
 else
-    echo "⚠️ [$(date +%H:%M:%S)] Chromium NO encontrado, instalando..."
-    echo "   Esto tomará ~30-60 segundos..."
+    echo "⚠️ [$(date +%H:%M:%S)] Chromium NO encontrado en $PLAYWRIGHT_BROWSERS_PATH"
+    echo "   Instalando... (esto tomará ~30-60 segundos)"
+    
+    # Crear directorio si no existe
+    mkdir -p "$PLAYWRIGHT_BROWSERS_PATH"
     
     # Instalar Chromium (sin dependencias del sistema)
-    python -m playwright install chromium --no-shell
-    
-    if [ $? -eq 0 ]; then
+    if python -m playwright install chromium --no-shell; then
         echo "✅ [$(date +%H:%M:%S)] Chromium instalado exitosamente"
+        # Verificar instalación
+        if compgen -G "$CHROMIUM_PATH" > /dev/null; then
+            ls -lh $CHROMIUM_PATH | head -1
+        else
+            echo "❌ [$(date +%H:%M:%S)] ERROR: Chromium instalado pero no encontrado en ruta esperada"
+            echo "   Buscando en todo PLAYWRIGHT_BROWSERS_PATH..."
+            find "$PLAYWRIGHT_BROWSERS_PATH" -name "headless_shell" 2>/dev/null || echo "   No se encontró headless_shell"
+        fi
     else
-        echo "❌ [$(date +%H:%M:%S)] ERROR instalando Chromium"
-        exit 1
+        echo "❌ [$(date +%H:%M:%S)] ERROR instalando Chromium (código: $?)"
+        echo "   El servicio intentará continuar, pero el scraping fallará"
     fi
 fi
 
