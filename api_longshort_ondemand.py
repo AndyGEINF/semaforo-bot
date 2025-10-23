@@ -136,25 +136,36 @@ async def stream_longshort(symbol: str):
                     yield f"event: loading\n"
                     yield f"data: {loading_event}\n\n"
                     
-                    # 🔥 SCRAPING con TIMEOUT de 15 segundos
+                    # 🔥 SCRAPING con TIMEOUT de 30 segundos (aumentado para Render)
                     print(f"🔄 [{datetime.now().strftime('%H:%M:%S')}] Scraping {symbol}...")
                     
                     try:
-                        # Timeout de 15 segundos para el scraping
+                        # Timeout de 30 segundos para el scraping (Render puede ser más lento)
                         data = await asyncio.wait_for(
                             get_coinglass_exact(symbol, interval="5m"),
-                            timeout=15.0
+                            timeout=30.0
                         )
                     except asyncio.TimeoutError:
-                        print(f"⏱️ Timeout al scrapear {symbol} (15s)")
+                        print(f"⏱️ Timeout al scrapear {symbol} (30s)")
                         error_event = {
                             "symbol": symbol,
-                            "error": "Timeout scraping CoinGlass (15s)",
+                            "error": "Timeout scraping CoinGlass (30s) - Render network/CPU may be slow",
                             "timestamp": datetime.now().isoformat()
                         }
                         yield f"event: error\n"
                         yield f"data: {error_event}\n\n"
                         await asyncio.sleep(5)  # Esperar más antes de reintentar
+                        continue
+                    except Exception as scrape_error:
+                        print(f"❌ Error de scraping para {symbol}: {scrape_error}")
+                        error_event = {
+                            "symbol": symbol,
+                            "error": f"Scraping error: {str(scrape_error)}",
+                            "timestamp": datetime.now().isoformat()
+                        }
+                        yield f"event: error\n"
+                        yield f"data: {error_event}\n\n"
+                        await asyncio.sleep(5)
                         continue
                     
                     if data:

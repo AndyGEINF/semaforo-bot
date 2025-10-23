@@ -29,16 +29,24 @@ async def get_coinglass_exact(symbol: str = "BTC", interval: str = "5m") -> dict
     """
     symbol = symbol.upper()
     print(f"🎯 [{datetime.now().strftime('%H:%M:%S')}] Scraping {symbol} (5min)...")
+    print(f"   🌍 Environment: Headless Chromium with anti-detection")
     
     async with async_playwright() as p:
-        browser = await p.chromium.launch(
-            headless=True,
-            args=[
-                '--disable-blink-features=AutomationControlled',
-                '--disable-dev-shm-usage',
-                '--no-sandbox'
-            ]
-        )
+        try:
+            browser = await p.chromium.launch(
+                headless=True,
+                args=[
+                    '--disable-blink-features=AutomationControlled',
+                    '--disable-dev-shm-usage',
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-gpu'
+                ]
+            )
+            print(f"   ✅ Browser launched successfully")
+        except Exception as e:
+            print(f"   ❌ Failed to launch browser: {e}")
+            return None
         
         context = await browser.new_context(
             user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
@@ -51,7 +59,14 @@ async def get_coinglass_exact(symbol: str = "BTC", interval: str = "5m") -> dict
             # Navegar a CoinGlass (puede ser cualquier moneda inicial)
             url = "https://www.coinglass.com/LongShortRatio"
             print(f"   📍 URL: {url}")
-            await page.goto(url, wait_until='domcontentloaded', timeout=15000)
+            try:
+                await page.goto(url, wait_until='domcontentloaded', timeout=15000)
+                print(f"   ✅ Page loaded successfully")
+            except Exception as nav_error:
+                print(f"   ❌ Navigation failed: {nav_error}")
+                await browser.close()
+                return None
+            
             await asyncio.sleep(1)
             
             # Cerrar popup de cookies
