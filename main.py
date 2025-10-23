@@ -12,7 +12,7 @@ Comandos disponibles:
 import os
 import json
 import asyncio
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 from datetime import datetime
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks
@@ -23,12 +23,9 @@ from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 import uvicorn
 
-# Importar módulos internos
-from strategy.risk_analyzer import RiskAnalyzer
-from strategy.entry_optimizer import EntryOptimizer
-from strategy.memory_manager import MemoryManager
-from data_adapter.exchange_adapter import ExchangeAdapter  # ← Cambiado de CoinGlass
-from redis_store import RedisStore
+# ⚡ IMPORTACIONES PESADAS MOVIDAS A initialize_components()
+# Esto permite que el servidor inicie inmediatamente para responder al health check
+# Mientras los módulos pesados (CCXT, estrategias) se cargan en background
 
 # Cargar variables de entorno
 load_dotenv()
@@ -58,13 +55,14 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Estado global del bot
 class BotState:
-    """Gestión del estado global del bot"""
+    """Estado global del bot"""
     def __init__(self):
-        self.redis_store: Optional[RedisStore] = None
-        self.risk_analyzer: Optional[RiskAnalyzer] = None
-        self.entry_optimizer: Optional[EntryOptimizer] = None
-        self.memory_manager: Optional[MemoryManager] = None
-        self.data_adapter: Optional[ExchangeAdapter] = None  # ← Cambiado tipo
+        # Usar Any en lugar de tipos específicos para evitar importar clases pesadas
+        self.redis_store: Optional[Any] = None
+        self.risk_analyzer: Optional[Any] = None
+        self.entry_optimizer: Optional[Any] = None
+        self.memory_manager: Optional[Any] = None
+        self.data_adapter: Optional[Any] = None
         self.pending_trade: Optional[Dict] = None
         self.active_trades: Dict[str, Dict] = {}
 
@@ -104,6 +102,13 @@ async def startup_event():
 
 async def initialize_components():
     """Inicializa componentes en background sin bloquear el startup"""
+    # ⚡ Importar módulos pesados AQUÍ para no bloquear el inicio del servidor
+    from strategy.risk_analyzer import RiskAnalyzer
+    from strategy.entry_optimizer import EntryOptimizer
+    from strategy.memory_manager import MemoryManager
+    from data_adapter.exchange_adapter import ExchangeAdapter
+    from redis_store import RedisStore
+    
     try:
         # Inicializar Redis Store (opcional - modo degradado sin Redis)
         # Prioridad: REDIS_URL (Render/Railway) > REDIS_HOST/PORT (local) > Sin Redis
