@@ -36,6 +36,8 @@ services:
       - key: PYTHON_VERSION
         value: "3.11.0"
     healthCheckPath: /status
+    # Render free tier puede tardar en iniciar Playwright
+    autoDeploy: true
 
   # Frontend estático (index_pro.html)
   - type: web
